@@ -1,0 +1,32 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Packages/
+Package.resolved
+
+# Xcode
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+DerivedData/
+*.moved-aside
+*.xcuserstate
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.log
+
+# Project specific
+QuickLook_Handoff.md
+DoubleClick_Handoff.md
+Portal_Bugs_Handoff.md
+DesignerAura_Technical_Handoff.md
+DesignerAura_QA_Validation_Plan.md
+Master_Aura_QA_Plan.md
