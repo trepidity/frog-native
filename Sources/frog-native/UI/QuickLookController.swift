@@ -51,22 +51,27 @@ class QuickLookController: NSObject, @preconcurrency QLPreviewPanelDataSource, @
     }
     
     // MARK: - QLPreviewPanelDataSource
-    
+
+    // swiftlint:disable implicitly_unwrapped_optional
     func numberOfPreviewItems(in panel: QLPreviewPanel!) -> Int {
         return currentURL == nil ? 0 : 1
     }
-    
+
     func previewPanel(_ panel: QLPreviewPanel!, previewItemAt index: Int) -> QLPreviewItem! {
         return currentURL as QLPreviewItem?
     }
-    
+
     // MARK: - QLPreviewPanelDelegate
-    
+
     func previewPanel(_ panel: QLPreviewPanel!, handle event: NSEvent!) -> Bool {
         return false
     }
-    
-    func previewPanel(_ panel: QLPreviewPanel!, sourceFrameOnScreenFor item: QLPreviewItem!) -> NSRect {
+
+    func previewPanel(
+        _ panel: QLPreviewPanel!,
+        sourceFrameOnScreenFor item: QLPreviewItem!
+    ) -> NSRect {
         return .zero
     }
+    // swiftlint:enable implicitly_unwrapped_optional
 }

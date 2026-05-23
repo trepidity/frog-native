@@ -6,7 +6,7 @@ struct CommandPaletteView: View {
     @State private var selectedIndex: Int = 0
     @State private var fileResults: [FileItem] = []
     @State private var searchTask: Task<Void, Never>?
-    @State private var previewURL: URL? = nil
+    @State private var previewURL: URL?
     @State private var previewTask: Task<Void, Never>?
     @FocusState private var isTextFieldFocused: Bool
     
@@ -113,7 +113,7 @@ struct CommandPaletteView: View {
                 TextField("Type a command or search files...", text: $searchText)
                     .textFieldStyle(.plain)
                     .focused($isTextFieldFocused)
-                    .onChange(of: searchText) { oldValue, newValue in
+                    .onChange(of: searchText) { _, _ in
                         selectedIndex = 0
                         scheduleSearch()
                     }
@@ -133,7 +133,7 @@ struct CommandPaletteView: View {
                     }
                     .listStyle(.plain)
                     .frame(maxHeight: 400)
-                    .onChange(of: selectedIndex) { oldValue, newIndex in
+                    .onChange(of: selectedIndex) { _, newIndex in
                         schedulePreview(for: newIndex)
                     }
                 } else {

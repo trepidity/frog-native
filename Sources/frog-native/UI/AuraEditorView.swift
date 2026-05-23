@@ -115,7 +115,7 @@ struct AuraEditorView: View {
     }
 
     private func focusEditorIfNeeded() {
-        guard !isLoading, (!isMarkdown || !isPreviewingMarkdown) else { return }
+        guard !isLoading, !isMarkdown || !isPreviewingMarkdown else { return }
 
         DispatchQueue.main.async {
             isEditorFocused = true

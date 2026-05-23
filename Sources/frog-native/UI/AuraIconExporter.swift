@@ -17,7 +17,7 @@ enum AuraIconExporter {
         .init(filename: "icon_256x256.png", pixelSize: 256),
         .init(filename: "icon_256x256@2x.png", pixelSize: 512),
         .init(filename: "icon_512x512.png", pixelSize: 512),
-        .init(filename: "icon_512x512@2x.png", pixelSize: 1024),
+        .init(filename: "icon_512x512@2x.png", pixelSize: 1024)
     ]
 
     static func exportIconset(to outputURL: URL? = nil) throws -> URL {

@@ -86,7 +86,7 @@ struct DualPaneView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("reclaimAuraFocus"))) { _ in
             reclaimKeyboardFocus()
         }
-        .onChange(of: state.left.mode) { oldValue, newMode in
+        .onChange(of: state.left.mode) { _, newMode in
             if case .browser = newMode, state.focusedPane == .left {
                 reclaimKeyboardFocus()
             }

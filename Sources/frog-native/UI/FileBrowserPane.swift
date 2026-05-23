@@ -46,8 +46,7 @@ struct FileBrowserPane: View {
         .auraQuickLookPreview($paneState.previewURL)
     }
 
-    @ViewBuilder
-    private var browserView: some View {
+    @ViewBuilder private var browserView: some View {
         VStack(spacing: 0) {
             // Sticky Aura Breadcrumbs
             if layout == .verticalTree {
@@ -108,7 +107,7 @@ struct AuraPathHeader: View {
     
     var body: some View {
         HStack(spacing: 4) {
-            if let _ = paneState.soloRoot {
+            if paneState.soloRoot != nil {
                 Button(action: {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                         paneState.exitSoloMode()
@@ -278,14 +277,22 @@ struct TreeRowView: View {
     var isExpanded: Bool {
         paneState.expandedItems.contains(treeItem.item.url)
     }
-    
+
+    private var nameColor: Color {
+        let isSelected = paneState.selection.contains(treeItem.id)
+        if treeItem.item.gitStatus == .clean {
+            return isSelected ? .white : .primary
+        }
+        return gitColor(for: treeItem.item.gitStatus)
+    }
+
     var body: some View {
         HStack(spacing: 0) {
             // Name Column with Guide Lines
             HStack(spacing: 0) {
-                ForEach(0..<treeItem.level, id: \.self) { i in
+                ForEach(0..<treeItem.level, id: \.self) { depth in
                     ZStack {
-                        if treeItem.parentLineStates[i] {
+                        if treeItem.parentLineStates[depth] {
                             Rectangle()
                                 .fill(gitColor(for: treeItem.item.gitStatus))
                                 .frame(width: 1.5)
@@ -328,11 +335,12 @@ struct TreeRowView: View {
                     Text(treeItem.item.name)
                         .lineLimit(1)
                         .fontWeight(paneState.selection.contains(treeItem.id) ? .bold : .regular)
-                        .foregroundColor(treeItem.item.gitStatus == .clean ? (paneState.selection.contains(treeItem.id) ? .white : .primary) : gitColor(for: treeItem.item.gitStatus))
-                    }
-                    .frame(height: 24)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)            
+                        .foregroundColor(nameColor)
+                }
+                .frame(height: 24)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
             // Context-Aware Metadata Columns
             if paneState.context == .assets {
                 Text(treeItem.item.dimensions ?? "--")
@@ -463,7 +471,7 @@ struct SortHeader: View {
 
 private func handleDrop(providers: [NSItemProvider], targetURL: URL, paneState: PaneState) {
     for provider in providers {
-        provider.loadObject(ofClass: NSURL.self) { url, error in
+        provider.loadObject(ofClass: NSURL.self) { url, _ in
             if let sourceURL = url as? URL {
                 DispatchQueue.main.async {
                     paneState.moveItem(at: sourceURL, to: targetURL)

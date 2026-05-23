@@ -145,7 +145,10 @@ struct AuraIconPreview: View {
                 }
             }
             
-            Text("Design Philosophy: The 'Staircase' segments represent the hierarchical tree, while the 'Sparkle' and deep gradient anchor it to the Aura theme.")
+            Text(
+                "Design Philosophy: The 'Staircase' segments represent the hierarchical tree, " +
+                "while the 'Sparkle' and deep gradient anchor it to the Aura theme."
+            )
                 .font(.callout)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
