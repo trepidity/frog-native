@@ -1,0 +1,41 @@
+name: Release Mac App
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build App
+        run: |
+          # Build the executable
+          swift build -c release --arch arm64 --arch x86_64
+          
+          # Create Bundle Structure
+          mkdir -p "Frog Native.app/Contents/MacOS"
+          mkdir -p "Frog Native.app/Contents/Resources"
+          
+          # Copy Executable
+          cp .build/apple/Products/Release/frog-native "Frog Native.app/Contents/MacOS/"
+          
+          # Copy Info.plist
+          cp Resources/Info.plist "Frog Native.app/Contents/"
+          
+          # Note: In a full production CI, we would use 'codesign' here
+          # with certificates from GitHub Secrets.
+          
+      - name: Package
+        run: zip -r FrogNative.zip "Frog Native.app"
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: FrogNative.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
