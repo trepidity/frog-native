@@ -118,7 +118,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc
     func moveToTrash() {
-        state.activePane.moveSelectionToTrash()
+        state.activePane.confirmMoveSelectionToTrash()
     }
 
     @objc

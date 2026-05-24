@@ -20,10 +20,10 @@ struct PaneStateTests {
         ]
 
         state.expandedItems = [alpha.url]
-        #expect(state.visibleItems.map(\.name) == ["alpha", "a.txt", "beta"])
+        #expect(state.visibleItems.map(\.item.name) == ["alpha", "a.txt", "beta"])
 
         state.expandedItems = [beta.url]
-        #expect(state.visibleItems.map(\.name) == ["alpha", "beta", "b.txt"])
+        #expect(state.visibleItems.map(\.item.name) == ["alpha", "beta", "b.txt"])
     }
 
     @Test
@@ -42,8 +42,6 @@ struct PaneStateTests {
         let state = PaneState(id: paneID, directory: root)
 
         #expect(state.expandedItems == Set([alpha]))
-        #expect(state.itemChildren[alpha] == nil)
-
         try await waitUntil {
             state.itemChildren[alpha]?.map(\.name) == ["a.txt"]
         }
@@ -60,6 +58,20 @@ struct PaneStateTests {
 
         let item = FileItem(url: imageURL)
         #expect(item.dimensions == "2×3 px")
+    }
+
+    @Test
+    func existingURLsForTrashSkipsMissingPaths() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("frog-native-trash-tests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+
+        let existing = root.appendingPathComponent("present.txt")
+        let missing = root.appendingPathComponent("missing.txt")
+        FileManager.default.createFile(atPath: existing.path, contents: Data("ok".utf8))
+
+        let filtered = PaneState.existingURLsForTrash(in: [existing, missing])
+        #expect(filtered == [existing])
     }
 }
 

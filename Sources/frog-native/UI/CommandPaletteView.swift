@@ -62,7 +62,7 @@ struct CommandPaletteView: View {
                 state.activePane.createNewFolder()
             },
             CommandAction(title: "Move to Trash", icon: "trash") {
-                state.activePane.moveSelectionToTrash()
+                state.activePane.confirmMoveSelectionToTrash()
             },
             CommandAction(title: "Toggle Hidden Files", icon: "eye.slash") {
                 // Placeholder

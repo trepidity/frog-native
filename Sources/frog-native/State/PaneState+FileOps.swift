@@ -2,6 +2,10 @@ import Foundation
 import AppKit
 
 extension PaneState {
+    private var selectedVisibleItems: [FileItem] {
+        visibleItems.filter { selection.contains($0.id) }.map(\.item)
+    }
+
     func createNewFolder() {
         let baseUrl = currentDirectory
         var folderName = "untitled folder"
@@ -52,15 +56,49 @@ extension PaneState {
         }
     }
 
+    func confirmMoveSelectionToTrash() {
+        let selectedItems = selectedVisibleItems
+        guard !selectedItems.isEmpty else { return }
+
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        if selectedItems.count == 1 {
+            alert.messageText = "Move “\(selectedItems[0].name)” to Trash?"
+            alert.informativeText = "This will move the selected item to the system Trash."
+        } else {
+            alert.messageText = "Move \(selectedItems.count) items to Trash?"
+            alert.informativeText = "This will move the selected items to the system Trash."
+        }
+        alert.addButton(withTitle: "Move to Trash")
+        alert.addButton(withTitle: "Cancel")
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            moveSelectionToTrash()
+        }
+    }
+
     func moveSelectionToTrash() {
-        let selectedItems = visibleItems.filter { selection.contains($0.id) }.map { $0.item }
+        let selectedItems = selectedVisibleItems
         guard !selectedItems.isEmpty else { return }
         let urls = selectedItems.map { $0.url }
-        NSWorkspace.shared.recycle(urls) { _, error in
+        let existingURLs = Self.existingURLsForTrash(in: urls)
+
+        guard !existingURLs.isEmpty else {
+            SoundManager.shared.play(.teleport)
+            NotificationCenter.default.post(name: Self.shouldRefreshPanes, object: nil)
+            self.selection = []
+            return
+        }
+
+        NSWorkspace.shared.recycle(existingURLs) { _, error in
             DispatchQueue.main.async {
                 if let error = error {
-                    SoundManager.shared.play(.error)
-                    print("Error moving to trash: \(error)")
+                    if Self.isMissingFileError(error) {
+                        SoundManager.shared.play(.teleport)
+                    } else {
+                        SoundManager.shared.play(.error)
+                        print("Error moving to trash: \(error)")
+                    }
                 } else {
                     SoundManager.shared.play(.teleport)
                 }
@@ -70,8 +108,31 @@ extension PaneState {
         }
     }
 
+    nonisolated static func existingURLsForTrash(in urls: [URL]) -> [URL] {
+        urls.filter { FileManager.default.fileExists(atPath: $0.path) }
+    }
+
+    nonisolated static func isMissingFileError(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        if (nsError.domain == NSCocoaErrorDomain && nsError.code == NSFileNoSuchFileError)
+            || (nsError.domain == NSOSStatusErrorDomain && nsError.code == -43) {
+            return true
+        }
+
+        if let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? Error,
+           isMissingFileError(underlying) {
+            return true
+        }
+
+        if let underlyingErrors = nsError.userInfo["NSUnderlyingErrors"] as? [NSError] {
+            return underlyingErrors.allSatisfy(isMissingFileError)
+        }
+
+        return false
+    }
+
     func copySelectionToClipboardRich() {
-        let selectedItems = visibleItems.filter { selection.contains($0.id) }.map { $0.item }
+        let selectedItems = selectedVisibleItems
         guard !selectedItems.isEmpty else { return }
 
         let pasteboard = NSPasteboard.general

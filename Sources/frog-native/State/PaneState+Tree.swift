@@ -2,7 +2,16 @@ import Foundation
 
 extension PaneState {
     var visibleItems: [VisibleTreeItem] {
-        let key = "\(expandedItems.count)-\(items.count)-\(itemChildren.count)-\(sortField)-\(sortOrder)"
+        let expandedKey = expandedItems.map(\.path).sorted().joined(separator: "|")
+        let itemKey = items.map(\.url.path).joined(separator: "|")
+        let childKey = itemChildren
+            .sorted { $0.key.path < $1.key.path }
+            .map { key, value in
+                let childPaths = value.map(\.url.path).joined(separator: ",")
+                return "\(key.path):\(childPaths)"
+            }
+            .joined(separator: "|")
+        let key = "\(expandedKey)#\(itemKey)#\(childKey)#\(sortField)#\(sortOrder)"
         if let cached = cachedVisibleItems, key == lastVisibleItemsKey {
             return cached
         }

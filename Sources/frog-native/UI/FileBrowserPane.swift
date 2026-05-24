@@ -39,7 +39,7 @@ struct FileBrowserPane: View {
             Button("Rename...") { 
                 print("Rename requested") 
             }
-            Button("Move to Trash") { paneState.moveSelectionToTrash() }
+            Button("Move to Trash") { paneState.confirmMoveSelectionToTrash() }
             Divider()
             Button("Copy Path") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(paneState.currentDirectory.path, forType: .string) }
         }
