@@ -53,4 +53,9 @@ swift run
 ## 🦉 Design Credits
 Built with **"Owl-Like" Thinking**—observing user behavior to create a tool that is as silent and powerful as a predator, yet as fluid and beautiful as a work of art.
 
-*Copyright © 2026. All rights reserved.*
+## 📄 License
+Frog Native is licensed under the **MIT License + Commons Clause**.
+
+Anyone may use, copy, modify, publish, distribute, and sublicense the software, but the software may not be sold as a product or service whose value derives substantially from Frog Native.
+
+See [LICENSE](LICENSE) for the full terms.
