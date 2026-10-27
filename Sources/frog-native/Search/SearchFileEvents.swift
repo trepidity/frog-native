@@ -8,8 +8,13 @@ final class SearchFileEvents {
 
     init(roots: [String], since: UInt64, handler: @escaping ([String], UInt64, Bool) -> Void) throws {
         self.handler = handler
-        var context = FSEventStreamContext(version: 0, info: Unmanaged.passUnretained(self).toOpaque(),
-                                          retain: nil, release: nil, copyDescription: nil)
+        var context = FSEventStreamContext(
+            version: 0,
+            info: Unmanaged.passUnretained(self).toOpaque(),
+            retain: nil,
+            release: nil,
+            copyDescription: nil
+        )
         let callback: FSEventStreamCallback = { _, context, count, rawPaths, flags, ids in
             guard let context else { return }
             let owner = Unmanaged<SearchFileEvents>.fromOpaque(context).takeUnretainedValue()
@@ -22,17 +27,26 @@ final class SearchFileEvents {
             let nameChanges = UInt32(kFSEventStreamEventFlagItemCreated | kFSEventStreamEventFlagItemRemoved |
                                      kFSEventStreamEventFlagItemRenamed | kFSEventStreamEventFlagMustScanSubDirs)
             let accessChanges = UInt32(kFSEventStreamEventFlagItemChangeOwner | kFSEventStreamEventFlagItemInodeMetaMod)
-            let changed = paths.enumerated().filter { index, _ in
-                let flag = flags[index]
-                // Content writes don't alter filename search. Directory access changes
-                // do matter: a previously denied subtree may now be readable.
-                return flag & (nameChanges | droppedMask) != 0 ||
-                    (flag & UInt32(kFSEventStreamEventFlagItemIsDir) != 0 && flag & accessChanges != 0)
-            }.map(\.element)
+            let changed = paths.enumerated()
+                .filter { index, _ in
+                    let flag = flags[index]
+                    // Content writes don't alter filename search. Directory access changes
+                    // do matter: a previously denied subtree may now be readable.
+                    return flag & (nameChanges | droppedMask) != 0 ||
+                        (flag & UInt32(kFSEventStreamEventFlagItemIsDir) != 0 && flag & accessChanges != 0)
+                }
+                .map(\.element)
             MainActor.assumeIsolated { owner.handler(changed, lastID, rebuild) }
         }
-        stream = FSEventStreamCreate(nil, callback, &context, roots as CFArray, since, 0.3,
-                                    UInt32(kFSEventStreamCreateFlagUseCFTypes | kFSEventStreamCreateFlagWatchRoot | kFSEventStreamCreateFlagFileEvents))
+        stream = FSEventStreamCreate(
+            nil,
+            callback,
+            &context,
+            roots as CFArray,
+            since,
+            0.3,
+            UInt32(kFSEventStreamCreateFlagUseCFTypes | kFSEventStreamCreateFlagWatchRoot | kFSEventStreamCreateFlagFileEvents)
+        )
         guard let stream else { throw CocoaError(.fileReadUnknown) }
         FSEventStreamSetDispatchQueue(stream, DispatchQueue.main)
         guard FSEventStreamStart(stream) else {

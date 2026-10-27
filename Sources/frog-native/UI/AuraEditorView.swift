@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct AuraEditorView: View {
-    @Environment(\.fileManagerPalette) private var theme
+    @Environment(\.fileManagerPalette)
+    private var theme
     let url: URL
     @ObservedObject var paneState: PaneState
     @State private var text: String = ""
@@ -81,7 +82,7 @@ struct AuraEditorView: View {
                         .scrollContentBackground(.hidden)
                         .focused($isEditorFocused)
                         .padding(8)
-                        .background(theme.bg)
+                        .background(theme.background)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }

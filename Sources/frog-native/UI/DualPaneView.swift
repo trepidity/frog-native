@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct DualPaneView: View {
-    @Environment(\.fileManagerPalette) private var theme
+    @Environment(\.fileManagerPalette)
+    private var theme
     @ObservedObject var state: BrowserState
     @FocusState private var isKeyboardFocused: Bool
     
@@ -108,7 +109,8 @@ struct DualPaneView: View {
 }
 
 struct StatusInfo: View {
-    @Environment(\.fileManagerPalette) private var theme
+    @Environment(\.fileManagerPalette)
+    private var theme
     @ObservedObject var paneState: PaneState
     
     var body: some View {

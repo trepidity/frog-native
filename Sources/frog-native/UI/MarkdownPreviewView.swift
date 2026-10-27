@@ -8,7 +8,6 @@ struct MarkdownView: View {
     let documentURL: URL
     let openFile: (URL) -> Void
     @State private var bodyHTML: String?
-
     var body: some View {
         Group {
             if let bodyHTML {
@@ -17,7 +16,7 @@ struct MarkdownView: View {
                 ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .background(theme.bg)
+        .background(theme.background)
         .task(id: text) {
             let source = text, url = documentURL
             let work = Task.detached(priority: .userInitiated) { MarkdownRenderer.render(source, documentURL: url) }
@@ -47,7 +46,7 @@ enum MarkdownPage {
         <meta http-equiv="Content-Security-Policy"
           content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'none'; base-uri 'none'; form-action 'none'">
         <style>
-        :root { --bg:\(hex(palette.bg)); --panel:\(hex(palette.panel)); --raised:\(hex(palette.panel2));
+        :root { --bg:\(hex(palette.background)); --panel:\(hex(palette.panel)); --raised:\(hex(palette.panel2));
           --text:\(hex(palette.ink.primary)); --muted:\(hex(palette.ink.secondary)); --link:\(hex(palette.ink.blue));
           --accent:\(hex(palette.ink.cyan)); --rule:\(hex(palette.rule2)); --selection:\(hex(palette.panel2)); }
         * { box-sizing:border-box; }

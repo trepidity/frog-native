@@ -2,7 +2,8 @@ import SwiftUI
 
 struct PreferencesView: View {
     @ObservedObject var browser: BrowserState
-    @Environment(\.fileManagerPalette) private var theme
+    @Environment(\.fileManagerPalette)
+    private var theme
     @StateObject private var settings = AuraSettings.shared
     
     var body: some View {
@@ -45,7 +46,6 @@ struct GeneralPreferencesView: View {
 
 private struct PanePreferencesView: View {
     @ObservedObject var pane: PaneState
-
     var body: some View {
         Picker("Layout", selection: $pane.currentLayout) {
             ForEach(LayoutType.allCases, id: \.self) { layout in
@@ -59,9 +59,11 @@ private struct PanePreferencesView: View {
 }
 
 struct AuraPreferencesView: View {
-    @Environment(\.fileManagerPalette) private var theme
+    @Environment(\.fileManagerPalette)
+    private var theme
     @ObservedObject var settings: AuraSettings
-    @AppStorage(FileManagerTheme.preferenceKey) private var selectedTheme = FileManagerTheme.solarizedDark.rawValue
+    @AppStorage(FileManagerTheme.preferenceKey)
+    private var selectedTheme = FileManagerTheme.solarizedDark.rawValue
 
     var body: some View {
         Form {

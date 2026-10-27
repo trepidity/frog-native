@@ -3,7 +3,8 @@
 // it does not claim filesystem crawling or Spotlight latency.
 import Foundation
 
-@main struct SearchBenchmark {
+@main
+struct SearchBenchmark {
     static func main() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("frog-search-bench-\(UUID())")
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
@@ -12,8 +13,8 @@ import Foundation
         let count = 1_000_000
         let start = ContinuousClock.now
         for offset in stride(from: 0, to: count, by: 1000) {
-            let entries = (offset..<offset + 1000).map { i in
-                SearchEntry(url: URL(fileURLWithPath: "/fixture/group-\(i / 1000)/document-\(i).swift"), isDirectory: i % 10 == 0)
+            let entries = (offset..<offset + 1000).map { rowIndex in
+                SearchEntry(url: URL(fileURLWithPath: "/fixture/group-\(rowIndex / 1000)/document-\(rowIndex).swift"), isDirectory: rowIndex % 10 == 0)
             }
             try await index.upsert(entries, generation: "fixture")
         }
@@ -32,7 +33,12 @@ import Foundation
             }
         }
         milliseconds.sort()
-        print(String(format: "queries=%d p50=%.2fms p95=%.2fms max=%.2fms", milliseconds.count,
-                     milliseconds[milliseconds.count / 2], milliseconds[Int(Double(milliseconds.count) * 0.95)], milliseconds.last ?? 0))
+        print(String(
+            format: "queries=%d p50=%.2fms p95=%.2fms max=%.2fms",
+            milliseconds.count,
+            milliseconds[milliseconds.count / 2],
+            milliseconds[Int(Double(milliseconds.count) * 0.95)],
+            milliseconds.last ?? 0
+        ))
     }
 }

@@ -60,7 +60,10 @@ struct FileItem: Identifiable, Hashable {
         self.name = url.lastPathComponent
         self.children = children
         
-        let resources = try? url.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey, .contentModificationDateKey, .creationDateKey, .contentTypeKey, .isHiddenKey, .isSymbolicLinkKey, .isAliasFileKey, .isPackageKey, .isExecutableKey])
+        let resources = try? url.resourceValues(forKeys: [
+            .isDirectoryKey, .fileSizeKey, .contentModificationDateKey, .creationDateKey,
+            .contentTypeKey, .isHiddenKey, .isSymbolicLinkKey, .isAliasFileKey, .isPackageKey, .isExecutableKey
+        ])
         self.isDirectory = resources?.isDirectory ?? false
         self.isHidden = url.lastPathComponent.hasPrefix(".") || resources?.isHidden == true
         self.isSymbolicLink = resources?.isSymbolicLink ?? false

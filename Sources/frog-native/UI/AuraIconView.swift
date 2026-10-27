@@ -41,15 +41,27 @@ enum AuraIconRenderer {
         guard pixelSize > 0, pixelSize <= 8192,
               let sourceURL = Bundle.module.url(forResource: name, withExtension: "svg", subdirectory: "Brand"),
               let source = NSImage(contentsOf: sourceURL),
-              let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: pixelSize, pixelsHigh: pixelSize,
-                                           bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true,
-                                           isPlanar: false, colorSpaceName: .deviceRGB,
-                                           bytesPerRow: pixelSize * 4, bitsPerPixel: 32),
+              let bitmap = NSBitmapImageRep(
+                  bitmapDataPlanes: nil,
+                  pixelsWide: pixelSize,
+                  pixelsHigh: pixelSize,
+                  bitsPerSample: 8,
+                  samplesPerPixel: 4,
+                  hasAlpha: true,
+                  isPlanar: false,
+                  colorSpaceName: .deviceRGB,
+                  bytesPerRow: pixelSize * 4,
+                  bitsPerPixel: 32
+              ),
               let context = NSGraphicsContext(bitmapImageRep: bitmap) else { return nil }
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = context
-        source.draw(in: NSRect(x: 0, y: 0, width: pixelSize, height: pixelSize),
-                    from: .zero, operation: .copy, fraction: 1)
+        source.draw(
+            in: NSRect(x: 0, y: 0, width: pixelSize, height: pixelSize),
+            from: .zero,
+            operation: .copy,
+            fraction: 1
+        )
         context.flushGraphics()
         NSGraphicsContext.restoreGraphicsState()
         return bitmap.representation(using: .png, properties: [:])

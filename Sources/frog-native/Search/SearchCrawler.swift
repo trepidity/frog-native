@@ -7,9 +7,19 @@ struct SearchCrawlReport: Sendable {
 }
 
 enum SearchCrawler {
+    private struct ScanContext {
+        let keys: Set<URLResourceKey>
+        let exclusions: Set<String>
+        let generation: String
+    }
+
     /// Name/type metadata only. Hidden files and package descendants are deliberately included.
-    static func scan(root: URL, excluding exclusions: Set<String>, into index: FilenameIndex,
-                     progress: @Sendable (Int) async -> Void = { _ in }) async throws -> SearchCrawlReport {
+    static func scan(
+        root: URL,
+        excluding exclusions: Set<String>,
+        into index: FilenameIndex,
+        progress: @Sendable (Int) async -> Void = { _ in }
+    ) async throws -> SearchCrawlReport {
         // Preserve the final component: file-event paths may themselves be symlinks.
         let root = root.path == "/" ? root : root.deletingLastPathComponent().canonicalDirectoryURL.appendingPathComponent(root.lastPathComponent)
         let generation = UUID().uuidString
@@ -38,28 +48,21 @@ enum SearchCrawler {
                 }
                 await progress(immediate.count)
             }
-            guard let enumerator = FileManager.default.enumerator(at: root, includingPropertiesForKeys: keys, options: [],
-                errorHandler: { url, _ in failures.paths.append(url); return true }) else {
+            guard let enumerator = FileManager.default.enumerator(
+                at: root,
+                includingPropertiesForKeys: keys,
+                options: [],
+                errorHandler: { url, _ in failures.paths.append(url); return true }
+            ) else {
                 return SearchCrawlReport(count: 0, denied: 1)
             }
-            while let url = enumerator.nextObject() as? URL {
-                try Task.checkCancellation()
-                if exclusions.contains(url.path) { enumerator.skipDescendants(); continue }
-                let values = try? url.resourceValues(forKeys: Set(keys))
-                if values?.isSymbolicLink == true { enumerator.skipDescendants() }
-                if values?.isDirectory == true && values?.volumeIsLocal == false {
-                    enumerator.skipDescendants()
-                    continue
-                }
-                batch.append(SearchEntry(url: url, isDirectory: values?.isDirectory == true))
-                count += 1
-                if batch.count >= 256 {
-                    try await index.upsert(batch, generation: generation)
-                    batch.removeAll(keepingCapacity: true)
-                    if count % 4096 == 0 { await progress(count) }
-                    await Task.yield()
-                }
-            }
+            count = try await scanDescendants(
+                enumerator,
+                context: ScanContext(keys: Set(keys), exclusions: exclusions, generation: generation),
+                index: index,
+                batch: &batch,
+                progress: progress
+            )
         }
         try await index.upsert(batch, generation: generation)
         // Preserve inaccessible subtrees instead of mistaking denied access for deletion.
@@ -70,6 +73,35 @@ enum SearchCrawler {
         try await index.prune(root: root, generation: generation)
         await progress(count)
         return SearchCrawlReport(count: count, denied: failures.paths.count)
+    }
+
+    private static func scanDescendants(
+        _ enumerator: FileManager.DirectoryEnumerator,
+        context: ScanContext,
+        index: FilenameIndex,
+        batch: inout [SearchEntry],
+        progress: @Sendable (Int) async -> Void
+    ) async throws -> Int {
+        var count = 1 // The root is already in the first batch.
+        while let url = enumerator.nextObject() as? URL {
+            try Task.checkCancellation()
+            if context.exclusions.contains(url.path) { enumerator.skipDescendants(); continue }
+            let values = try? url.resourceValues(forKeys: context.keys)
+            if values?.isSymbolicLink == true { enumerator.skipDescendants() }
+            if values?.isDirectory == true && values?.volumeIsLocal == false {
+                enumerator.skipDescendants()
+                continue
+            }
+            batch.append(SearchEntry(url: url, isDirectory: values?.isDirectory == true))
+            count += 1
+            if batch.count >= 256 {
+                try await index.upsert(batch, generation: context.generation)
+                batch.removeAll(keepingCapacity: true)
+                if count % 4096 == 0 { await progress(count) }
+                await Task.yield()
+            }
+        }
+        return count
     }
 }
 

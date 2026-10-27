@@ -73,8 +73,11 @@ final class UniversalSearchSession: NSObject, ObservableObject {
         let query = NSMetadataQuery()
         self.query = query
         query.searchScopes = [NSMetadataQueryIndexedLocalComputerScope]
-        query.predicate = NSPredicate(format: text.count < 3 ? "%K BEGINSWITH[cd] %@" : "%K CONTAINS[cd] %@",
-                                      NSMetadataItemFSNameKey, text)
+        query.predicate = NSPredicate(
+            format: text.count < 3 ? "%K BEGINSWITH[cd] %@" : "%K CONTAINS[cd] %@",
+            NSMetadataItemFSNameKey,
+            text
+        )
         query.sortDescriptors = [NSSortDescriptor(key: NSMetadataItemFSNameKey, ascending: true)]
         query.notificationBatchingInterval = 0.05
         for name in [NSNotification.Name.NSMetadataQueryDidUpdate, NSNotification.Name.NSMetadataQueryGatheringProgress,
@@ -85,12 +88,13 @@ final class UniversalSearchSession: NSObject, ObservableObject {
         if !spotlightPending { errorMessage = "Spotlight unavailable; using the filename index." }
     }
 
-    @objc private func spotlightUpdated(_ notification: Notification) {
+    @objc
+    private func spotlightUpdated(_ notification: Notification) {
         guard let query, notification.object as? NSMetadataQuery === query else { return }
         query.disableUpdates()
         var matches: [SearchEntry] = []
-        for i in 0..<min(query.resultCount, 400) {
-            guard let item = query.result(at: i) as? NSMetadataItem,
+        for resultIndex in 0..<min(query.resultCount, 400) {
+            guard let item = query.result(at: resultIndex) as? NSMetadataItem,
                   let path = item.value(forAttribute: NSMetadataItemPathKey) as? String else { continue }
             let type = item.value(forAttribute: NSMetadataItemContentTypeKey) as? String
             let types = item.value(forAttribute: NSMetadataItemContentTypeTreeKey) as? [String] ?? []

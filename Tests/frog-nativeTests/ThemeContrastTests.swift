@@ -10,7 +10,7 @@ struct ThemeContrastTests {
     @Test(arguments: FileManagerTheme.allCases)
     func readableInkMeetsContrastFloor(theme: FileManagerTheme) throws {
         let palette = theme.palette
-        let regularSurfaces = [palette.bg, palette.bg2, palette.panel, palette.selection]
+        let regularSurfaces = [palette.background, palette.bg2, palette.panel, palette.selection]
         for surface in regularSurfaces {
             for ink in inks(palette.ink) {
                 #expect(try contrast(ink, surface) >= 4.5)

@@ -46,8 +46,11 @@ actor FilenameIndex {
     }
 
     private func error() -> Error {
-        NSError(domain: "FilenameIndex", code: Int(sqlite3_errcode(handle)),
-                userInfo: [NSLocalizedDescriptionKey: String(cString: sqlite3_errmsg(handle))])
+        NSError(
+            domain: "FilenameIndex",
+            code: Int(sqlite3_errcode(handle)),
+            userInfo: [NSLocalizedDescriptionKey: String(cString: sqlite3_errmsg(handle))]
+        )
     }
 
     private func prepare(_ sql: String, _ values: [String]) throws -> OpaquePointer? {

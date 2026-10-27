@@ -1,12 +1,13 @@
 import SwiftUI
 
 struct ContentView: View {
-    @Environment(\.fileManagerPalette) private var theme
+    @Environment(\.fileManagerPalette)
+    private var theme
     @ObservedObject var state: BrowserState
     
     var body: some View {
         ZStack {
-            theme.bg
+            theme.background
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {

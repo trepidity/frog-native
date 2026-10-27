@@ -40,13 +40,14 @@ struct SearchEntry: Identifiable, Hashable, Sendable {
             if name.hasPrefix(needle) || name.hasPrefix("." + needle) { return 1 }
             return 2
         }
-        return Array(Set(entries)).sorted {
+        let sorted = Array(Set(entries)).sorted {
             let left = rank($0), right = rank($1)
             if left != right { return left < right }
             if $0.isDirectory != $1.isDirectory { return $0.isDirectory }
             if $0.url.path.count != $1.url.path.count { return $0.url.path.count < $1.url.path.count }
             return $0.url.path < $1.url.path
-        }.prefix(limit).map { $0 }
+        }
+        return Array(sorted.prefix(limit))
     }
 
     static func directPathMatches(_ text: String) throws -> [SearchEntry] {
@@ -63,7 +64,9 @@ struct SearchEntry: Identifiable, Hashable, Sendable {
         let prefix = text.hasSuffix("/") ? "" : normalize(url.lastPathComponent)
         var readError: Error?
         let children = FileManager.default.enumerator(
-            at: parent, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsSubdirectoryDescendants],
+            at: parent,
+            includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsSubdirectoryDescendants],
             errorHandler: { _, error in readError = error; return false }
         )
         while let child = children?.nextObject() as? URL {

@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ColumnVisibilityMenu: View {
     @ObservedObject var paneState: PaneState
-
     var body: some View {
         ForEach(FileColumn.allCases) { column in
             Toggle(column.title, isOn: Binding(

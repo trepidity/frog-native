@@ -2,7 +2,8 @@ import SwiftUI
 import _QuickLook_SwiftUI
 
 struct FileBrowserPane: View {
-    @Environment(\.fileManagerPalette) private var theme
+    @Environment(\.fileManagerPalette)
+    private var theme
     @ObservedObject var paneState: PaneState
     let isFocused: Bool
     let acceptsPointerActivation: Bool
@@ -57,7 +58,7 @@ struct FileBrowserPane: View {
                     .transition(.asymmetric(insertion: .move(edge: .bottom), removal: .move(edge: .bottom)))
             }
         }
-        .background(theme.bg)
+        .background(theme.background)
         .background(PaneActivationObserver(isEnabled: acceptsPointerActivation, activate: activate))
         .overlay(
             RoundedRectangle(cornerRadius: 0)
@@ -115,7 +116,7 @@ struct FileBrowserPane: View {
                 .listStyle(.inset)
                 .scrollContentBackground(.hidden)
                 .alternatingRowBackgrounds(.disabled)
-                .background(theme.bg)
+                .background(theme.background)
                 .onDrop(of: [.fileURL], isTargeted: nil) { providers in
                     handleDrop(providers: providers, targetURL: paneState.currentDirectory, paneState: paneState)
                     return true
@@ -180,14 +181,15 @@ struct FileBrowserPane: View {
                 .tableStyle(.inset)
                 .scrollContentBackground(.hidden)
                 .alternatingRowBackgrounds(.disabled)
-                .background(theme.bg)
+                .background(theme.background)
             }
         }
     }
 }
 
 struct AuraPathHeader: View {
-    @Environment(\.fileManagerPalette) private var theme
+    @Environment(\.fileManagerPalette)
+    private var theme
     @ObservedObject var paneState: PaneState
     
     var body: some View {
@@ -238,11 +240,11 @@ struct AuraPathHeader: View {
         .background(theme.bg2)
         .overlay(ThemeDivider(), alignment: .bottom)
     }
-    
 }
 
 struct VerticalTreePane: View {
-    @Environment(\.fileManagerPalette) private var theme
+    @Environment(\.fileManagerPalette)
+    private var theme
     @ObservedObject var paneState: PaneState
     let isFocused: Bool
     
@@ -300,12 +302,12 @@ struct VerticalTreePane: View {
                         .id(treeItem.id) // Set ID for scrolling
                         .listRowInsets(EdgeInsets())
                         .listRowSeparator(.hidden)
-                        .listRowBackground(theme.bg)
+                        .listRowBackground(theme.background)
                     }
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
-                .background(theme.bg)
+                .background(theme.background)
                 .onChange(of: paneState.selection) { _, newSelection in
                     if let first = newSelection.first {
                         // Keep visible rows stationary between clicks. Keyboard and
@@ -320,11 +322,11 @@ struct VerticalTreePane: View {
             }
         }
     }
-    
 }
 
 struct TreeRowView: View {
-    @Environment(\.fileManagerPalette) private var theme
+    @Environment(\.fileManagerPalette)
+    private var theme
     let treeItem: VisibleTreeItem
     @ObservedObject var paneState: PaneState
     let isFocused: Bool
@@ -336,8 +338,10 @@ struct TreeRowView: View {
         paneState.expandedItems.contains(treeItem.item.url)
     }
 
-    @AppStorage("aura.showGuideLines") private var showGuideLines = true
-    @AppStorage("aura.gitAuraEnabled") private var showGitStatus = true
+    @AppStorage("aura.showGuideLines")
+    private var showGuideLines = true
+    @AppStorage("aura.gitAuraEnabled")
+    private var showGitStatus = true
 
     private var selected: Bool { paneState.selection.contains(treeItem.id) }
     private var ink: ThemeInk { (isHovered || isTargeted) && !selected ? theme.raisedInk : theme.ink }
@@ -432,7 +436,8 @@ struct TreeRowView: View {
 }
 
 struct SortHeader: View {
-    @Environment(\.fileManagerPalette) private var theme
+    @Environment(\.fileManagerPalette)
+    private var theme
     let title: String
     let field: SortField
     @ObservedObject var paneState: PaneState

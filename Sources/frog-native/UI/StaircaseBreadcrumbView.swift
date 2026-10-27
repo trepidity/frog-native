@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct StaircaseBreadcrumbView: View {
-    @Environment(\.fileManagerPalette) private var theme
+    @Environment(\.fileManagerPalette)
+    private var theme
     let currentDirectory: URL
     let onNavigate: (URL) -> Void
     
@@ -44,7 +45,8 @@ struct StaircaseBreadcrumbView: View {
 }
 
 struct StaircaseStep: View {
-    @Environment(\.fileManagerPalette) private var theme
+    @Environment(\.fileManagerPalette)
+    private var theme
     let title: String
     let depth: Int
     let isLast: Bool

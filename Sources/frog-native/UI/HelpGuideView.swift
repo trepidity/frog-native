@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct HelpGuideView: View {
-    @Environment(\.fileManagerPalette) private var theme
+    @Environment(\.fileManagerPalette)
+    private var theme
     @ObservedObject var paneState: PaneState
     
     var body: some View {
@@ -69,13 +70,14 @@ struct HelpGuideView: View {
                 }
                 .padding(24)
             }
-            .background(theme.bg)
+            .background(theme.background)
         }
     }
 }
 
 struct GuideSection<Content: View>: View {
-    @Environment(\.fileManagerPalette) private var theme
+    @Environment(\.fileManagerPalette)
+    private var theme
     let title: String
     let icon: String
     let content: Content
@@ -103,7 +105,8 @@ struct GuideSection<Content: View>: View {
 }
 
 struct GuideRow: View {
-    @Environment(\.fileManagerPalette) private var theme
+    @Environment(\.fileManagerPalette)
+    private var theme
     let key: String
     let desc: String
     
@@ -120,7 +123,8 @@ struct GuideRow: View {
 }
 
 struct ColorInfo: View {
-    @Environment(\.fileManagerPalette) private var theme
+    @Environment(\.fileManagerPalette)
+    private var theme
     let color: Color
     let desc: String
     

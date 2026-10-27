@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct CommandPaletteView: View {
-    @Environment(\.fileManagerPalette) private var theme
+    @Environment(\.fileManagerPalette)
+    private var theme
     @ObservedObject var state: BrowserState
     @State private var searchText: String = ""
     @State private var selectedIndex: Int = 0
@@ -13,47 +14,6 @@ struct CommandPaletteView: View {
     @State private var previewURL: URL?
     @State private var previewTask: Task<Void, Never>?
     @FocusState private var isTextFieldFocused: Bool
-
-    enum SearchResult: Identifiable, Equatable {
-        case action(CommandAction)
-        case file(SearchEntry)
-
-        static func == (lhs: SearchResult, rhs: SearchResult) -> Bool {
-            lhs.id == rhs.id
-        }
-
-        var id: String {
-            switch self {
-            case .action(let action): return "action-\(action.title)"
-            case .file(let item): return "file-\(item.url.path)"
-            }
-        }
-
-        var title: String {
-            switch self {
-            case .action(let action): return action.title
-            case .file(let item): return item.name
-            }
-        }
-
-        var icon: String {
-            switch self {
-            case .action(let action): return action.icon
-            case .file(let item): return item.isDirectory ? "folder.fill" : "doc.fill"
-            }
-        }
-
-        var isAction: Bool {
-            if case .action = self { return true }
-            return false
-        }
-
-        var isDirectory: Bool {
-            if case .file(let item) = self { return item.isDirectory }
-            return false
-        }
-    }
-
     var actions: [CommandAction] {
         var baseActions = [
             CommandAction(title: "Focus Left Pane", icon: "arrow.left.square") {
@@ -94,7 +54,6 @@ struct CommandPaletteView: View {
 
         // Actions
         let filteredActions = actions.filter { searchText.isEmpty || $0.title.localizedCaseInsensitiveContains(searchText) }
-
 
         // Files
         if !searchText.isEmpty {
@@ -362,5 +321,47 @@ struct CommandPaletteView: View {
         previewTask?.cancel()
         previewURL = nil
         search.search(searchText, index: index.index)
+    }
+}
+
+extension CommandPaletteView {
+    enum SearchResult: Identifiable, Equatable {
+        case action(CommandAction)
+        case file(SearchEntry)
+
+        static func == (lhs: SearchResult, rhs: SearchResult) -> Bool {
+            lhs.id == rhs.id
+        }
+
+        var id: String {
+            switch self {
+            case .action(let action): return "action-\(action.title)"
+            case .file(let item): return "file-\(item.url.path)"
+            }
+        }
+
+        var title: String {
+            switch self {
+            case .action(let action): return action.title
+            case .file(let item): return item.name
+            }
+        }
+
+        var icon: String {
+            switch self {
+            case .action(let action): return action.icon
+            case .file(let item): return item.isDirectory ? "folder.fill" : "doc.fill"
+            }
+        }
+
+        var isAction: Bool {
+            if case .action = self { return true }
+            return false
+        }
+
+        var isDirectory: Bool {
+            if case .file(let item) = self { return item.isDirectory }
+            return false
+        }
     }
 }

@@ -25,8 +25,12 @@ final class UniversalSearchIndex: ObservableObject {
         worker = Task { [self] in
             do {
                 let manager = FileManager.default
-                let cache = try manager.url(for: .applicationSupportDirectory, in: .userDomainMask,
-                                            appropriateFor: nil, create: true)
+                let cache = try manager.url(
+                    for: .applicationSupportDirectory,
+                    in: .userDomainMask,
+                    appropriateFor: nil,
+                    create: true
+                )
                     .appendingPathComponent(Bundle.main.bundleIdentifier ?? "frog-native")
                     .appendingPathComponent("SearchIndex-v1", isDirectory: true)
                 try manager.createDirectory(at: cache, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
@@ -84,8 +88,7 @@ final class UniversalSearchIndex: ObservableObject {
         if pending.count > 512 { pending.removeAll(); needsFullScan = true }
         guard worker == nil, let index else { return }
         worker = Task { [self] in
-            do { try await drain(index) }
-            catch {
+            do { try await drain(index) } catch {
                 needsFullScan = true
                 status = "Search index update failed; retry on next change or restart."
                 isIndexing = false
