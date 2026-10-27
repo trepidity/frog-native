@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AuraEditorView: View {
+    @Environment(\.fileManagerPalette) private var theme
     let url: URL
     @ObservedObject var paneState: PaneState
     @State private var text: String = ""
@@ -24,19 +25,19 @@ struct AuraEditorView: View {
                 }
                 .buttonStyle(.plain)
                 .font(.system(size: 10, weight: .bold))
-                .foregroundColor(.accentColor)
+                .foregroundColor(theme.ink.blue)
                 
                 Spacer()
                 
                 HStack(spacing: 6) {
                     Image(systemName: isMarkdown && isPreviewingMarkdown ? "doc.richtext" : "pencil.line")
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(theme.ink.blue)
                     Text(isMarkdown && isPreviewingMarkdown ? "Previewing" : "Editing")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(theme.ink.blue)
                     Text(url.lastPathComponent)
                         .font(.system(size: 11, weight: .bold, design: .monospaced))
-                        .foregroundColor(.primary)
+                        .foregroundColor(theme.ink.primary)
                 }
                 
                 Spacer()
@@ -48,7 +49,7 @@ struct AuraEditorView: View {
                     }
                     .buttonStyle(.plain)
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(theme.ink.blue)
                     .padding(.trailing, 12)
                 }
                 
@@ -58,13 +59,13 @@ struct AuraEditorView: View {
                     }
                     .buttonStyle(.plain)
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(theme.ink.blue)
                 }
             }
             .padding(.horizontal, 12)
             .frame(height: 32)
-            .background(VisualEffectView(material: .headerView, blendingMode: .withinWindow))
-            .overlay(Divider(), alignment: .bottom)
+            .background(theme.bg2)
+            .overlay(ThemeDivider(), alignment: .bottom)
             
             if isLoading {
                 ProgressView()
@@ -79,7 +80,7 @@ struct AuraEditorView: View {
                         .scrollContentBackground(.hidden)
                         .focused($isEditorFocused)
                         .padding(8)
-                        .background(VisualEffectView(material: .sidebar, blendingMode: .withinWindow))
+                        .background(theme.bg)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
@@ -128,6 +129,7 @@ struct AuraEditorView: View {
 }
 
 struct MarkdownView: View {
+    @Environment(\.fileManagerPalette) private var theme
     let text: String
     
     var body: some View {
@@ -152,6 +154,6 @@ struct MarkdownView: View {
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(VisualEffectView(material: .sidebar, blendingMode: .withinWindow))
+        .background(theme.bg)
     }
 }

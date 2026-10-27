@@ -1,5 +1,6 @@
 import Foundation
 import AppKit
+import OSLog
 
 extension PaneState {
     nonisolated static let directoryEnumerationKeys: [URLResourceKey] = [
@@ -39,10 +40,9 @@ extension PaneState {
         generation: Int
     ) async {
         do {
-            let gitStatuses = await getCachedGitStatus(for: directory)
             let (newItems, newContext) = try await Self.fetchAndSort(
                 directory: directory,
-                gitStatuses: gitStatuses,
+                gitStatuses: gitStatusCache[directory] ?? [:],
                 sortField: sortField,
                 sortOrder: sortOrder
             )
@@ -53,6 +53,19 @@ extension PaneState {
                 previousItems: previousItems,
                 generation: generation
             )
+            // Show the destination immediately; a large repository's Git process
+            // must not hold up a search jump or the initial directory listing.
+            let gitStatuses = await getCachedGitStatus(for: directory)
+            guard !Task.isCancelled, generation == loadGeneration else { return }
+            let updatedItems = items.map { item in
+                var updated = item
+                updated.gitStatus = gitStatuses[item.url.path] ?? .clean
+                return updated
+            }
+            if updatedItems != items {
+                cachedVisibleItems = nil
+                items = updatedItems
+            }
         } catch is CancellationError {
             if generation == self.loadGeneration {
                 self.loadTask = nil
@@ -78,7 +91,7 @@ extension PaneState {
             let urls = try manager.contentsOfDirectory(
                 at: directory,
                 includingPropertiesForKeys: directoryEnumerationKeys,
-                options: .skipsHiddenFiles
+                options: []
             )
             try Task.checkCancellation()
             let items = urls.map { url -> FileItem in
@@ -109,6 +122,10 @@ extension PaneState {
             }
         }
         self.items = newItems
+        if let target = pendingReveal, newItems.contains(where: { $0.url.path == target.path }) {
+            pendingReveal = nil
+            selection = Set(newItems.filter { $0.url.path == target.path }.map(\.url))
+        }
         self.context = newContext
         self.isPathLoading = false
         self.loadTask = nil
@@ -126,10 +143,14 @@ extension PaneState {
 
     nonisolated private static func fetchGitStatus(for directory: URL) async -> [String: FileItem.GitStatus] {
         await Task.detached(priority: .utility) {
+            // Ordinary folders have no Git status. A .git file is valid too (worktrees
+            // and separate Git directories); status paths are relative to this root.
+            guard let root = gitRepositoryRoot(containing: directory) else { return [:] }
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
             process.arguments = ["status", "--porcelain"]
-            process.currentDirectoryURL = directory
+            process.currentDirectoryURL = root
+            process.standardError = FileHandle.nullDevice
 
             let pipe = Pipe()
             process.standardOutput = pipe
@@ -137,12 +158,27 @@ extension PaneState {
             do {
                 try process.run()
                 let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                process.waitUntilExit()
+                guard process.terminationStatus == 0 else {
+                    Logger(subsystem: "frog-native", category: "git").error("Git status exited with code \(process.terminationStatus)")
+                    return [:]
+                }
                 guard let output = String(data: data, encoding: .utf8) else { return [:] }
-                return parseGitStatus(output: output, directory: directory)
+                return parseGitStatus(output: output, directory: root)
             } catch {
+                Logger(subsystem: "frog-native", category: "git").error("Unable to start Git status: \(error.localizedDescription)")
                 return [:]
             }
         }.value
+    }
+
+    nonisolated static func gitRepositoryRoot(containing directory: URL) -> URL? {
+        var candidate = directory.canonicalDirectoryURL
+        while true {
+            if FileManager.default.fileExists(atPath: candidate.appendingPathComponent(".git").path) { return candidate }
+            guard candidate.path != "/" else { return nil }
+            candidate.deleteLastPathComponent()
+        }
     }
 
     nonisolated private static func parseGitStatus(
@@ -195,7 +231,7 @@ extension PaneState {
         let urls = (try? FileManager.default.contentsOfDirectory(
             at: item.url,
             includingPropertiesForKeys: Self.directoryEnumerationKeys,
-            options: .skipsHiddenFiles
+            options: []
         )) ?? []
         return Self.sortItems(
             urls.map { FileItem(url: $0) },
@@ -216,7 +252,7 @@ extension PaneState {
             let urls = (try? manager.contentsOfDirectory(
                 at: itemURL,
                 includingPropertiesForKeys: PaneState.directoryEnumerationKeys,
-                options: .skipsHiddenFiles
+                options: []
             )) ?? []
             let items = urls.map { url -> FileItem in
                 var child = FileItem(url: url)

@@ -10,8 +10,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var keyMonitor: Any?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        UniversalSearchIndex.shared.start()
+        NSApp.applicationIconImage = AuraIconRenderer.makeApplicationIcon()
         setupMenu()
-        let contentView = ContentView(state: state)
+        let contentView = ContentView(state: state).fileManagerTheme()
 
         let mainWindow = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1000, height: 700),
@@ -51,6 +53,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        UniversalSearchIndex.shared.stop()
         if let keyMonitor {
             NSEvent.removeMonitor(keyMonitor)
         }
@@ -141,7 +144,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
         prefsWindow.center()
         prefsWindow.title = "Aura Preferences"
-        prefsWindow.contentView = NSHostingView(rootView: PreferencesView())
+        prefsWindow.contentView = NSHostingView(rootView: PreferencesView().fileManagerTheme())
 
         self.preferencesWindow = prefsWindow
         prefsWindow.makeKeyAndOrderFront(nil)

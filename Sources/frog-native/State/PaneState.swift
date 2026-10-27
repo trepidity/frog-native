@@ -59,6 +59,7 @@ class PaneState: ObservableObject {
     var cancellables = Set<AnyCancellable>()
     var loadTask: Task<Void, Never>?
     var loadGeneration: Int = 0
+    var pendingReveal: URL?
 
     var gitStatusCache: [URL: [String: FileItem.GitStatus]] = [:]
     var lastGitFetchTime: [URL: Date] = [:]

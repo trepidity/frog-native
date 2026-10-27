@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct DualPaneView: View {
+    @Environment(\.fileManagerPalette) private var theme
     @ObservedObject var state: BrowserState
     @FocusState private var isKeyboardFocused: Bool
     
@@ -32,22 +33,25 @@ struct DualPaneView: View {
                 }
             }
             
-            Divider()
+            ThemeDivider()
             
             // Status Bar
             HStack {
                 StatusInfo(paneState: state.left)
-                Divider().frame(height: 12)
+                ThemeDivider(vertical: true).frame(height: 12)
                 StatusInfo(paneState: state.right)
             }
             .frame(height: 24)
             .padding(.horizontal, 8)
-            .background(Color(NSColor.windowBackgroundColor))
+            .background(theme.bg2)
             .font(.system(size: 11))
-            .foregroundColor(.secondary)
+            .foregroundColor(theme.ink.secondary)
         }
         .focusable(true)
         .focused($isKeyboardFocused)
+        .onChange(of: state.isCommandPalettePresented) { _, presented in
+            if presented { isKeyboardFocused = false } else { reclaimKeyboardFocus() }
+        }
         .onKeyPress(.tab) {
             state.toggleFocus()
             return .handled
@@ -100,12 +104,14 @@ struct DualPaneView: View {
 
     private func reclaimKeyboardFocus() {
         DispatchQueue.main.async {
+            guard !state.isCommandPalettePresented else { return }
             isKeyboardFocused = true
         }
     }
 }
 
 struct StatusInfo: View {
+    @Environment(\.fileManagerPalette) private var theme
     @ObservedObject var paneState: PaneState
     
     var body: some View {

@@ -1,0 +1,20 @@
+GIMP Palette
+Name: Frog Native Solarized Dark
+Columns: 4
+# Semantic palette, not raw canonical accents
+0 43 54	bg
+0 34 43	bg2
+7 54 66	panel
+19 62 74	panel2
+15 68 82	rule
+31 71 81	rule2
+4 48 60	selection
+238 232 213	ink
+147 161 161	ink2
+140 155 155	ink3
+81 160 213	blue
+144 161 20	good
+232 119 110	bad
+187 147 20	warn
+59 168 158	cyan
+146 148 204	violet

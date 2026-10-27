@@ -18,6 +18,11 @@ struct FileItem: Identifiable, Hashable {
     let url: URL
     let name: String
     let isDirectory: Bool
+    let isHidden: Bool
+    let isSymbolicLink: Bool
+    let isAlias: Bool
+    let isPackage: Bool
+    let isExecutable: Bool
     let size: Int64
     let modificationDate: Date
     let creationDate: Date
@@ -55,8 +60,13 @@ struct FileItem: Identifiable, Hashable {
         self.name = url.lastPathComponent
         self.children = children
         
-        let resources = try? url.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey, .contentModificationDateKey, .creationDateKey, .contentTypeKey])
+        let resources = try? url.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey, .contentModificationDateKey, .creationDateKey, .contentTypeKey, .isHiddenKey, .isSymbolicLinkKey, .isAliasFileKey, .isPackageKey, .isExecutableKey])
         self.isDirectory = resources?.isDirectory ?? false
+        self.isHidden = url.lastPathComponent.hasPrefix(".") || resources?.isHidden == true
+        self.isSymbolicLink = resources?.isSymbolicLink ?? false
+        self.isAlias = resources?.isAliasFile ?? false
+        self.isPackage = resources?.isPackage ?? false
+        self.isExecutable = !self.isDirectory && resources?.isExecutable == true
         self.size = Int64(resources?.fileSize ?? 0)
         self.modificationDate = resources?.contentModificationDate ?? Date.distantPast
         self.creationDate = resources?.creationDate ?? Date.distantPast

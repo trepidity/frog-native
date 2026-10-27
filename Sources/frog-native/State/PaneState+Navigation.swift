@@ -120,13 +120,51 @@ extension PaneState {
     }
 
     func updateDirectory(_ newURL: URL, clearForward: Bool = true) {
-        guard newURL != currentDirectory else { return }
-        if clearForward {
+        let newURL = newURL.standardizedFileURL.canonicalDirectoryURL
+        let changed = newURL.path != currentDirectory.path
+        let leavingSolo = soloRoot != nil
+        mode = .browser
+        soloRoot = nil
+        pendingReveal = nil
+        guard changed || leavingSolo else { return }
+        if clearForward && changed {
             backStack.append(currentDirectory)
             forwardStack.removeAll()
         }
         currentDirectory = newURL
         selection = []
+        loadContents()
+    }
+
+    /// Folders become the browsing root; files are selected after their parent has loaded.
+    func jump(to entry: SearchEntry) {
+        if entry.isDirectory {
+            updateDirectory(entry.url)
+        } else {
+            let parent = entry.url.deletingLastPathComponent().canonicalDirectoryURL
+            let target = parent.appendingPathComponent(entry.url.lastPathComponent)
+            updateDirectory(parent)
+            mode = .browser
+            if let item = items.first(where: { $0.url.path == target.path }), !isPathLoading {
+                selection = [item.url]
+            } else {
+                pendingReveal = target
+                loadContents()
+            }
+        }
+    }
+
+    var breadcrumbs: [URL] {
+        let root = (soloRoot ?? currentDirectory).canonicalDirectoryURL
+        let selected = selection.first.flatMap { url in visibleItems.first { $0.id == url }?.item }
+        var target = selected.map { $0.isDirectory ? $0.url : $0.url.deletingLastPathComponent() } ?? root
+        guard target.path == root.path || target.path.hasPrefix(root.path == "/" ? "/" : root.path + "/") else { return [root] }
+        var result: [URL] = []
+        while target.path != root.path && target.path != "/" {
+            result.insert(target, at: 0)
+            target.deleteLastPathComponent()
+        }
+        return [root] + result
     }
 
     func navigateIn() {

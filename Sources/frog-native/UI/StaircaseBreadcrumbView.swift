@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct StaircaseBreadcrumbView: View {
+    @Environment(\.fileManagerPalette) private var theme
     let currentDirectory: URL
     let onNavigate: (URL) -> Void
     
@@ -25,7 +26,7 @@ struct StaircaseBreadcrumbView: View {
             .padding(.vertical, 8)
             .padding(.horizontal, 16)
         }
-        .background(Color(NSColor.controlBackgroundColor).opacity(0.3))
+        .background(theme.bg2)
         .frame(height: 60)
     }
     
@@ -43,6 +44,7 @@ struct StaircaseBreadcrumbView: View {
 }
 
 struct StaircaseStep: View {
+    @Environment(\.fileManagerPalette) private var theme
     let title: String
     let depth: Int
     let isLast: Bool
@@ -61,10 +63,10 @@ struct StaircaseStep: View {
             .padding(.leading, depth > 0 ? 12 : 0) // Offset for overlap
             .background(
                 StaircaseShape()
-                    .fill(isLast ? Color.accentColor : Color(NSColor.controlColor))
+                    .fill(isLast ? theme.selection : theme.panel)
                     .shadow(radius: 2, x: 2, y: 0)
             )
-            .foregroundColor(isLast ? .white : .primary)
+            .foregroundColor(isLast ? theme.ink.blue : theme.ink.primary)
         }
         .buttonStyle(.plain)
     }

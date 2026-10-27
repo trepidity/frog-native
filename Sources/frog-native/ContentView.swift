@@ -1,11 +1,12 @@
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(\.fileManagerPalette) private var theme
     @ObservedObject var state: BrowserState
     
     var body: some View {
         ZStack {
-            VisualEffectView(material: .sidebar, blendingMode: .behindWindow)
+            theme.bg
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
@@ -19,23 +20,23 @@ struct ContentView: View {
                     Button(action: { state.isCommandPalettePresented.toggle() }) {
                         Image(systemName: "magnifyingglass")
                         Text("Search or Action...")
-                        Text("⌘K").opacity(0.5)
+                        Text("⌘K").foregroundStyle(theme.ink.secondary)
                     }
                     .buttonStyle(.bordered)
                     .keyboardShortcut("k", modifiers: .command)
                     .padding(8)
                 }
                 .frame(height: 40)
-                .background(Color.clear)
+                .background(theme.bg2)
                 
-                Divider()
+                ThemeDivider()
                 
                 DualPaneView(state: state)
             }
             .blur(radius: state.isCommandPalettePresented ? 10 : 0)
             
             if state.isCommandPalettePresented {
-                Color.black.opacity(0.2)
+                theme.bg2.opacity(0.65)
                     .ignoresSafeArea()
                     .onTapGesture {
                         state.isCommandPalettePresented = false

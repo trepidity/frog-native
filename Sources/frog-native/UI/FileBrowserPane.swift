@@ -2,6 +2,7 @@ import SwiftUI
 import _QuickLook_SwiftUI
 
 struct FileBrowserPane: View {
+    @Environment(\.fileManagerPalette) private var theme
     @ObservedObject var paneState: PaneState
     let isFocused: Bool
     let layout: LayoutType
@@ -20,10 +21,10 @@ struct FileBrowserPane: View {
                     .transition(.asymmetric(insertion: .move(edge: .bottom), removal: .move(edge: .bottom)))
             }
         }
-        .background(isFocused ? Color.accentColor.opacity(0.02) : Color.clear)
+        .background(theme.bg)
         .overlay(
             RoundedRectangle(cornerRadius: 0)
-                .stroke(isFocused ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 2)
+                .stroke(isFocused ? theme.ink.blue : theme.rule, lineWidth: isFocused ? 2 : 1)
         )
         .contextMenu {
             Button("Open") { paneState.navigateIn() }
@@ -58,13 +59,17 @@ struct FileBrowserPane: View {
                 List(paneState.items, selection: $paneState.selection) { item in
                     HStack {
                         Image(systemName: item.isDirectory ? "folder.fill" : "doc.fill")
-                        Text(item.name)
+                            .foregroundColor(paneState.selection.contains(item.url) ? .primary : theme.ink.kind(for: item))
+                        Text(item.name).foregroundColor(paneState.selection.contains(item.url) ? .primary : theme.ink.name(for: item))
                     }
                     .onDrag {
                         NSItemProvider(object: item.url as NSURL)
                     }
                 }
                 .listStyle(.inset)
+                .scrollContentBackground(.hidden)
+                .alternatingRowBackgrounds(.disabled)
+                .background(theme.bg)
                 .onDrop(of: [.fileURL], isTargeted: nil) { providers in
                     handleDrop(providers: providers, targetURL: paneState.currentDirectory, paneState: paneState)
                     return true
@@ -77,32 +82,36 @@ struct FileBrowserPane: View {
                     TableColumn("Name") { item in
                         HStack {
                             Image(systemName: item.isDirectory ? "folder.fill" : "doc.fill")
-                                .foregroundColor(item.isDirectory ? .blue : .secondary)
+                                .foregroundColor(paneState.selection.contains(item.url) ? .primary : theme.ink.kind(for: item))
                                 .frame(width: 16)
-                            Text(item.name)
+                            Text(item.name).foregroundColor(paneState.selection.contains(item.url) ? .primary : theme.ink.name(for: item))
                         }
                     }
                     
                     TableColumn("Size") { item in
                         Text(item.isDirectory ? "--" : ByteCountFormatter.string(fromByteCount: item.size, countStyle: .file))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(paneState.selection.contains(item.url) ? .primary : theme.ink.secondary)
                             .font(.system(.body, design: .monospaced))
                     }
                     .width(min: 80, max: 120)
                     
                     TableColumn("Modified") { item in
                         Text(item.modificationDate, style: .date)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(paneState.selection.contains(item.url) ? .primary : theme.ink.secondary)
                     }
                     .width(min: 100, max: 150)
                 }
                 .tableStyle(.inset)
+                .scrollContentBackground(.hidden)
+                .alternatingRowBackgrounds(.disabled)
+                .background(theme.bg)
             }
         }
     }
 }
 
 struct AuraPathHeader: View {
+    @Environment(\.fileManagerPalette) private var theme
     @ObservedObject var paneState: PaneState
     
     var body: some View {
@@ -118,62 +127,46 @@ struct AuraPathHeader: View {
                         Text("Exit Solo")
                     }
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(theme.ink.blue)
                 }
                 .buttonStyle(.plain)
                 .padding(.trailing, 8)
                 
-                Divider().frame(height: 12)
+                ThemeDivider(vertical: true).frame(height: 12)
             }
             
-            let path = currentAuraPath()
+            let path = paneState.breadcrumbs
             Image(systemName: paneState.soloRoot == nil ? "sparkles" : "scope")
-                .foregroundColor(.accentColor)
+                .foregroundColor(theme.ink.blue)
                 .font(.system(size: 10))
             
             ForEach(path.indices, id: \.self) { index in
-                Text(path[index])
+                Text(path[index].path == "/" ? "/" : path[index].lastPathComponent)
                     .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .padding(.vertical, 4)
+                    .contentShape(Rectangle())
+                    .onTapGesture(count: 2) { paneState.updateDirectory(path[index]) }
+                    .help("Double-click to browse \(path[index].path)")
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityAction { paneState.updateDirectory(path[index]) }
                 if index < path.count - 1 {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 8))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(theme.ink.secondary)
                 }
             }
             Spacer()
         }
         .padding(.horizontal, 12)
         .frame(height: 24)
-        .background(VisualEffectView(material: .headerView, blendingMode: .withinWindow))
-        .overlay(Divider(), alignment: .bottom)
+        .background(theme.bg2)
+        .overlay(ThemeDivider(), alignment: .bottom)
     }
     
-    private func currentAuraPath() -> [String] {
-        let activeRoot = paneState.soloRoot ?? paneState.currentDirectory
-        
-        guard let selectedID = paneState.selection.first,
-              let item = paneState.visibleItems.first(where: { $0.id == selectedID }) else {
-            return [activeRoot.lastPathComponent]
-        }
-        
-        let fullPath = item.item.url.path
-        let rootPath = activeRoot.path
-        
-        if fullPath == rootPath {
-            return [activeRoot.lastPathComponent]
-        }
-        
-        if fullPath.hasPrefix(rootPath) {
-            let relative = fullPath.replacingOccurrences(of: rootPath, with: "")
-            let components = relative.components(separatedBy: "/").filter { !$0.isEmpty }
-            return [activeRoot.lastPathComponent] + components
-        }
-        
-        return [item.item.name]
-    }
 }
 
 struct VerticalTreePane: View {
+    @Environment(\.fileManagerPalette) private var theme
     @ObservedObject var paneState: PaneState
     let isFocused: Bool
     
@@ -184,36 +177,36 @@ struct VerticalTreePane: View {
                 SortHeader(title: "Name", field: .name, paneState: paneState)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.leading, 32)
-                Divider().padding(.vertical, 4)
+                ThemeDivider(vertical: true).padding(.vertical, 4)
                 
                 if paneState.context == .assets {
                     Text("Dimensions")
                         .frame(width: 120, alignment: .leading)
                         .padding(.leading, 8)
-                        .opacity(isFocused ? 1.0 : 0.2)
-                    Divider().padding(.vertical, 4)
+                    ThemeDivider(vertical: true).padding(.vertical, 4)
                     Text("Type")
                         .frame(width: 120, alignment: .leading)
                         .padding(.leading, 8)
-                        .opacity(isFocused ? 1.0 : 0.2)
                 } else {
                     SortHeader(title: "Created", field: .created, paneState: paneState)
                         .frame(width: 120, alignment: .leading)
                         .padding(.leading, 8)
-                        .opacity(isFocused ? 1.0 : 0.2)
-                    Divider().padding(.vertical, 4)
+                    ThemeDivider(vertical: true).padding(.vertical, 4)
                     SortHeader(title: "Modified", field: .modified, paneState: paneState)
                         .frame(width: 120, alignment: .leading)
                         .padding(.leading, 8)
-                        .opacity(isFocused ? 1.0 : 0.2)
                 }
+                ThemeDivider(vertical: true).padding(.vertical, 4)
+                Text("Size")
+                    .frame(width: 80, alignment: .trailing)
+                    .padding(.horizontal, 8)
             }
             .font(.system(size: 11, weight: .bold))
-            .foregroundColor(.secondary)
+            .foregroundColor(theme.ink.secondary)
             .frame(height: 24)
-            .background(VisualEffectView(material: .titlebar, blendingMode: .withinWindow))
+            .background(theme.bg2)
             
-            Divider()
+            ThemeDivider()
             
             ScrollViewReader { proxy in
                 List {
@@ -226,15 +219,17 @@ struct VerticalTreePane: View {
                         .id(treeItem.id) // Set ID for scrolling
                         .listRowInsets(EdgeInsets())
                         .listRowSeparator(.hidden)
-                        .listRowBackground(rowBackground(for: treeItem))
+                        .listRowBackground(theme.bg)
                     }
                 }
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(theme.bg)
                 .onChange(of: paneState.selection) { _, newSelection in
                     if let first = newSelection.first {
-                        withAnimation(.easeInOut) {
-                            proxy.scrollTo(first, anchor: .center)
-                        }
+                        // Keep visible rows stationary between clicks. Keyboard and
+                        // search selection still reveal rows outside the viewport.
+                        proxy.scrollTo(first)
                     }
                 }
             }
@@ -245,28 +240,10 @@ struct VerticalTreePane: View {
         }
     }
     
-    private func rowBackground(for treeItem: VisibleTreeItem) -> some View {
-        ZStack {
-            if paneState.selection.contains(treeItem.id) {
-                Color.accentColor
-            } else {
-                compositeAura(for: treeItem.item, at: treeItem.level)
-            }
-            
-            if treeItem.item.gitStatus != .clean && !paneState.selection.contains(treeItem.id) {
-                gitColor(for: treeItem.item.gitStatus).opacity(0.12)
-                    .blur(radius: 4)
-            }
-            
-            // Birth Glow
-            if paneState.recentArrivals[treeItem.item.url] != nil {
-                Color.green.opacity(0.2)
-            }
-        }
-    }
 }
 
 struct TreeRowView: View {
+    @Environment(\.fileManagerPalette) private var theme
     let treeItem: VisibleTreeItem
     @ObservedObject var paneState: PaneState
     let isFocused: Bool
@@ -278,13 +255,11 @@ struct TreeRowView: View {
         paneState.expandedItems.contains(treeItem.item.url)
     }
 
-    private var nameColor: Color {
-        let isSelected = paneState.selection.contains(treeItem.id)
-        if treeItem.item.gitStatus == .clean {
-            return isSelected ? .white : .primary
-        }
-        return gitColor(for: treeItem.item.gitStatus)
-    }
+    @AppStorage("aura.showGuideLines") private var showGuideLines = true
+    @AppStorage("aura.gitAuraEnabled") private var showGitStatus = true
+
+    private var selected: Bool { paneState.selection.contains(treeItem.id) }
+    private var ink: ThemeInk { (isHovered || isTargeted) && !selected ? theme.raisedInk : theme.ink }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -292,12 +267,11 @@ struct TreeRowView: View {
             HStack(spacing: 0) {
                 ForEach(0..<treeItem.level, id: \.self) { depth in
                     ZStack {
-                        if treeItem.parentLineStates[depth] {
+                        if showGuideLines && treeItem.parentLineStates[depth] {
                             Rectangle()
-                                .fill(gitColor(for: treeItem.item.gitStatus))
+                                .fill(theme.rule2)
                                 .frame(width: 1.5)
                                 .padding(.leading, 10)
-                                .shadow(color: gitColor(for: treeItem.item.gitStatus).opacity(0.5), radius: 2)
                         }
                     }
                     .frame(width: 20)
@@ -308,7 +282,7 @@ struct TreeRowView: View {
                         Image(systemName: "chevron.right")
                             .font(.system(size: 9))
                             .rotationEffect(isExpanded ? .degrees(90) : .zero)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(ink.secondary)
                             .frame(width: 24, height: 24)
                             .contentShape(Rectangle())
                             .onTapGesture {
@@ -321,21 +295,15 @@ struct TreeRowView: View {
                         Spacer().frame(width: 24)
                     }
                     
-                    Image(systemName: treeItem.item.isDirectory ? "folder.fill" : "doc.fill")
-                        .foregroundColor(treeItem.item.isDirectory ? .blue : .secondary)
+                    Image(systemName: treeItem.item.isSymbolicLink || treeItem.item.isAlias ? "link" : (treeItem.item.isDirectory ? "folder.fill" : "doc.fill"))
+                        .foregroundColor(ink.kind(for: treeItem.item))
                         .frame(width: 16)
-                        .overlay(
-                            Circle()
-                                .fill(gitColor(for: treeItem.item.gitStatus))
-                                .frame(width: 6, height: 6)
-                                .offset(x: 6, y: 6)
-                                .opacity(treeItem.item.gitStatus == .clean ? 0 : 1)
-                        )
-                    
+
                     Text(treeItem.item.name)
                         .lineLimit(1)
                         .fontWeight(paneState.selection.contains(treeItem.id) ? .bold : .regular)
-                        .foregroundColor(nameColor)
+                        .foregroundColor(ink.name(for: treeItem.item))
+                    if showGitStatus { GitStatusBadge(status: treeItem.item.gitStatus, ink: ink) }
                 }
                 .frame(height: 24)
             }
@@ -345,30 +313,27 @@ struct TreeRowView: View {
             if paneState.context == .assets {
                 Text(treeItem.item.dimensions ?? "--")
                     .font(.system(size: 10))
-                    .foregroundColor(paneState.selection.contains(treeItem.id) ? .white.opacity(0.8) : .secondary)
+                    .foregroundColor(selected ? ink.primary : ink.secondary)
                     .frame(width: 120, alignment: .leading)
                     .padding(.leading, 8)
-                    .opacity(isFocused ? 0.8 : 0.2)
                 
                 Text(treeItem.item.fileTypeDescription ?? "--")
                     .font(.system(size: 10))
-                    .foregroundColor(paneState.selection.contains(treeItem.id) ? .white.opacity(0.8) : .secondary)
+                    .foregroundColor(selected ? ink.primary : ink.secondary)
                     .frame(width: 120, alignment: .leading)
                     .padding(.leading, 8)
-                    .opacity(isFocused ? 0.8 : 0.2)
             } else {
                 // Liquid Created Column
                 if treeItem.level < 5 {
                     Text(treeItem.item.creationDate, style: treeItem.level < 3 ? .date : .offset)
                         .font(.system(size: 10))
-                        .foregroundColor(paneState.selection.contains(treeItem.id) ? .white.opacity(0.8) : .secondary)
+                        .foregroundColor(selected ? ink.primary : ink.secondary)
                         .frame(width: treeItem.level < 3 ? 120 : 80, alignment: .leading)
                         .padding(.leading, 8)
-                        .opacity(isFocused ? 0.8 : 0.2)
                 } else {
                     Image(systemName: "calendar.badge.plus")
                         .font(.system(size: 8))
-                        .foregroundColor(paneState.selection.contains(treeItem.id) ? .white.opacity(0.5) : .secondary.opacity(0.3))
+                        .foregroundColor(ink.muted)
                         .frame(width: 30)
                 }
                 
@@ -376,19 +341,32 @@ struct TreeRowView: View {
                 if treeItem.level < 4 {
                     Text(treeItem.item.modificationDate, style: treeItem.level < 2 ? .date : .offset)
                         .font(.system(size: 10))
-                        .foregroundColor(paneState.selection.contains(treeItem.id) ? .white.opacity(0.8) : .secondary)
+                        .foregroundColor(selected ? ink.primary : ink.secondary)
                         .frame(width: treeItem.level < 2 ? 120 : 80, alignment: .leading)
                         .padding(.leading, 8)
-                        .opacity(isFocused ? 0.8 : 0.2)
                 } else {
                     Image(systemName: "pencil.line")
                         .font(.system(size: 8))
-                        .foregroundColor(paneState.selection.contains(treeItem.id) ? .white.opacity(0.5) : .secondary.opacity(0.3))
+                        .foregroundColor(ink.muted)
                         .frame(width: 30)
                 }
             }
+
+            Text(treeItem.item.isDirectory ? "--" : ByteCountFormatter.string(
+                fromByteCount: treeItem.item.size,
+                countStyle: .file
+            ))
+            .font(.system(size: 10, design: .monospaced))
+            .foregroundColor(selected ? ink.primary : ink.secondary)
+            .lineLimit(1)
+            .frame(width: 80, alignment: .trailing)
+            .padding(.horizontal, 8)
         }
         .padding(.vertical, 2)
+        .background(SelectionBackground(selected: selected, focused: isFocused, hovered: isHovered || isTargeted))
+        .overlay {
+            if isTargeted { Rectangle().stroke(theme.ink.blue, lineWidth: 2) }
+        }
         .contentShape(Rectangle())
         .simultaneousGesture(
             TapGesture(count: 2).onEnded {
@@ -402,9 +380,7 @@ struct TreeRowView: View {
             }
         )
         .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.2)) {
-                isHovered = hovering
-            }
+            isHovered = hovering
         }
         .onDrag {
             NSItemProvider(object: treeItem.item.url as NSURL)
@@ -419,31 +395,8 @@ struct TreeRowView: View {
     }
 }
 
-// Global Helpers (Keeping them outside for easy access)
-private func gitColor(for status: FileItem.GitStatus) -> Color {
-    switch status {
-    case .added, .untracked: return .green
-    case .modified: return .orange
-    case .deleted: return .red
-    case .clean: return .secondary.opacity(0.3)
-    }
-}
-
-private func compositeAura(for item: FileItem, at level: Int) -> some View {
-    ZStack {
-        if level > 0 {
-            Color.primary.opacity(min(Double(level) * 0.04, 0.12))
-        }
-        let score = item.recencyScore
-        if score > 0 {
-            Color.orange.opacity(score * 0.15).blendMode(.screen)
-        } else {
-            Color.blue.opacity(0.05).blendMode(.multiply)
-        }
-    }
-}
-
 struct SortHeader: View {
+    @Environment(\.fileManagerPalette) private var theme
     let title: String
     let field: SortField
     @ObservedObject var paneState: PaneState
@@ -459,9 +412,11 @@ struct SortHeader: View {
         }) {
             HStack(spacing: 4) {
                 Text(title)
+                    .foregroundColor(paneState.sortField == field ? theme.ink.primary : theme.ink.secondary)
                 if paneState.sortField == field {
                     Image(systemName: paneState.sortOrder == .ascending ? "chevron.up" : "chevron.down")
                         .font(.system(size: 8))
+                        .foregroundColor(theme.ink.blue)
                 }
             }
         }

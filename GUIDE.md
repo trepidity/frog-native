@@ -14,10 +14,14 @@ Welcome to the definitive guide to **Frog Native**. This document covers every i
 - **`Escape`**: Exit Solo Mode / Close Command Palette / Close Editor.
 
 ### Searching (Aura Spotlight)
-- **`Cmd + K`**: Open Spotlight.
-- **`Enter`**: Reveal and center file in the staircase.
-- **`Cmd + Enter`**: Open file directly in the Portal.
+- **`Cmd + K`**: Search this Mac for files, folders, or commands.
+- **`Enter`**: Browse the selected folder, or load a file’s parent and select the file.
+- **`Cmd + Enter`**: Open the selected file with the editor or its default application.
 - **`Arrows / Mouse Hover`**: Preview file (600ms debounce).
+
+Type an absolute path or `~/` path for direct navigation and path completion. Hidden names and package contents are included in the filename index. Search remains usable while initial indexing runs; protected folders require macOS access.
+
+Double-click a directory breadcrumb above the tree to browse that directory.
 
 ### Actions
 - **`Cmd + N`**: Create a new "Untitled Folder".
@@ -29,31 +33,32 @@ Welcome to the definitive guide to **Frog Native**. This document covers every i
 
 ## 🌈 2. Reading the Aura
 
-### Color & Light
-- **Pulsating Green:** A new file has just landed (lasts 5s).
-- **Orange Glow:** Recent modification ("Hot" file).
-- **Blue Tint:** Long-term storage ("Cold" file).
-- **Yellow Guide Lines:** Modified Git state.
-- **Green Guide Lines:** New/Added Git state.
+### Solarized Themes
+Solarized Dark is the default. **Cmd+, → Appearance → Colors** switches between Dark and Light immediately and remembers the choice.
+
+- **Selection:** A subtle fill and leading bar; the blue bar identifies the focused pane.
+- **Folders:** Blue icons; links and aliases use a cyan link glyph.
+- **Git:** Added, Modified, Deleted, and Untracked labels carry the status in words as well as color.
+- **Hidden items:** Readable, muted names; file sizes remain visible.
 
 ### Indentation Guides
-The vertical lines are the "spine" of the Aura. They connect parents to their children. If a line is glowing yellow, every file in that branch has uncommitted changes.
+Neutral vertical guides connect parents and children. Toggle the guides or Git labels in Appearance preferences.
 
 ---
 
 ## 🚪 3. The Aura Portal
 The Portal is for "one-off" work. When you don't want to open a heavy editor, just double-click:
 - **Markdown:** Renders with native headers and lists.
-- **JSON/Code:** Monospaced frosted editor with direct save support.
+- **JSON/Code:** Monospaced themed editor with direct save support.
 - **Binaries:** Automatically hands off to your default native app.
 
 ---
 
 ## ⚙️ 4. Personalization
 Use **Cmd + ,** to tune your experience:
-- **Aura Intensity:** Adjust the strength of the depth-based shading.
+- **Colors:** Choose Solarized Dark or Solarized Light.
 - **Sound Settings:** Toggle tactile sound effects or adjust volume.
-- **Glow Duration:** Customize how long new files pulsate green.
+- **File List:** Toggle hierarchy guides and Git status labels.
 
 ---
 

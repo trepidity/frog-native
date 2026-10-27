@@ -10,19 +10,24 @@
 Designed for designers and developers who live in their files, Frog Native treats the filesystem as a physical structure. 
 
 - **🪜 The Staircase:** A high-performance vertical tree that visualizes directory depth through recursive indentation and glowing guide lines.
-- **🌈 Temporal Heatmap:** Files emit a warm orange "glow" if they were touched recently, or recede into a "cold" blue as they age.
-- **🌿 Git Vitality:** Your project's health is woven into the structure. Guide lines and rows pulse with color based on their Git status (Green for new, Yellow for modified).
+- **🌈 Solarized Themes:** Solarized Dark is the default. Choose Dark or Light in **Preferences → Appearance** (Cmd+,); the choice applies immediately and persists across launches.
+- **🌿 Git Status:** Added, Modified, Deleted, and Untracked labels use semantic accents while the file-list background stays quiet.
 - **🎼 Auditory Aura:** Every interaction has a voice. Experience subtle, tactile sound effects for expansion, selection, and "teleporting" files.
 
 ---
 
 ## 🚀 Key Features
 
-### 🔦 Aura Spotlight (Intelligent Search)
-Press **Cmd+K** to launch the high-speed elevator for your project.
-- **Fuzzy Ranking:** Search results are ranked by an "Aura Score" that considers name match quality and temporal recency.
-- **Instant Reveal:** Selecting a result automatically unfolds every parent folder and centers the item in your view.
-- **Live Previews:** Hover over search results to see an instant, debounced native Quick Look preview.
+### 🔦 Universal Search
+Press **Cmd+K** to search filenames and folders across this Mac, including hidden names and package contents.
+- A persistent filename index and macOS Spotlight provide progressive results without a per-keystroke disk crawl.
+- Exact names and prefixes rank first. Queries of three or more characters also match substrings; case and accents are folded.
+- **Enter** browses a folder or selects a file in its parent directory, even outside the active pane. **Cmd+Enter** opens a file.
+- Absolute paths and `~/` paths support direct navigation and immediate-child completion.
+- Filesystem events update names after creates, renames, and deletes, including changes made while the app was closed.
+- Initial indexing and access limits are visible. Network volumes and inaccessible locations are not fully indexed.
+
+See [search architecture and measured performance](docs/universal-search.md).
 
 ### 🚪 Aura Portal (Integrated Editing)
 Double-click a file to "enter the portal." 
@@ -49,6 +54,12 @@ swift run
 ```
 
 ---
+
+## Asset Kit
+
+The Solarized frog-and-folder identity includes macOS ICNS/Xcode catalogs, Windows ICO, Linux hicolor icons, web icons, transparent logos, 30 original UI glyphs, and semantic palette files.
+
+See [the asset guide](Assets/README.md) and [preview board](Assets/Preview/asset-board.png). Regenerate with `python3 scripts/generate-assets.py`; validate with `python3 scripts/validate-assets.py`. The generated download is `dist/FrogNative-AssetKit.zip`.
 
 ## 🦉 Design Credits
 Built with **"Owl-Like" Thinking**—observing user behavior to create a tool that is as silent and powerful as a predator, yet as fluid and beautiful as a work of art.

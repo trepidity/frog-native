@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct PreferencesView: View {
+    @Environment(\.fileManagerPalette) private var theme
     @StateObject private var settings = AuraSettings.shared
     
     var body: some View {
@@ -12,7 +13,7 @@ struct PreferencesView: View {
             
             AuraPreferencesView(settings: settings)
                 .tabItem {
-                    Label("Aura", systemImage: "sparkles")
+                    Label("Appearance", systemImage: "paintpalette")
                 }
             
             SensoryPreferencesView(settings: settings)
@@ -22,6 +23,7 @@ struct PreferencesView: View {
         }
         .frame(width: 450, height: 350)
         .padding(20)
+        .background(theme.panel)
     }
 }
 
@@ -39,39 +41,41 @@ struct GeneralPreferencesView: View {
                 }
             }
             
-            Section("File Behavior") {
-                Slider(value: $settings.birthGlowDuration, in: 1...30, step: 1) {
-                    Text("New File Glow Duration")
-                } minimumValueLabel: {
-                    Text("1s")
-                } maximumValueLabel: {
-                    Text("30s")
-                }
-                Text("\(Int(settings.birthGlowDuration)) seconds")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
+
         }
     }
 }
 
 struct AuraPreferencesView: View {
+    @Environment(\.fileManagerPalette) private var theme
     @ObservedObject var settings: AuraSettings
-    
+    @AppStorage(FileManagerTheme.preferenceKey) private var selectedTheme = FileManagerTheme.solarizedDark.rawValue
+
     var body: some View {
         Form {
-            Section("Aura Visuals") {
-                Slider(value: $settings.auraIntensity, in: 0.1...2.0) {
-                    Text("Aura Intensity")
+            Section("Theme") {
+                Picker("Colors", selection: Binding(
+                    get: { FileManagerTheme(rawValue: selectedTheme) ?? .solarizedDark },
+                    set: { selectedTheme = $0.rawValue }
+                )) {
+                    ForEach(FileManagerTheme.allCases) { choice in
+                        Text(choice.title).tag(choice)
+                    }
                 }
-                
-                Toggle("Show Hierarchical Guide Lines", isOn: $settings.showGuideLines)
-                Toggle("Use Frosted Glass Materials", isOn: $settings.useFrostedMaterials)
+                HStack(spacing: 8) {
+                    ForEach([theme.ink.blue, theme.ink.good, theme.ink.warn, theme.ink.bad, theme.ink.cyan, theme.ink.violet].indices, id: \.self) { index in
+                        let colors = [theme.ink.blue, theme.ink.good, theme.ink.warn, theme.ink.bad, theme.ink.cyan, theme.ink.violet]
+                        Circle().fill(colors[index]).frame(width: 14, height: 14)
+                    }
+                }
+                .accessibilityHidden(true)
+                Text("Applies immediately to both panes and is remembered next time.")
+                    .font(.caption)
+                    .foregroundStyle(theme.ink.secondary)
             }
-            
-            Section("Intelligence") {
-                Toggle("Enable Temporal Heatmap", isOn: $settings.heatmapEnabled)
-                Toggle("Enable Git Health Visualization", isOn: $settings.gitAuraEnabled)
+            Section("File List") {
+                Toggle("Show Hierarchical Guide Lines", isOn: $settings.showGuideLines)
+                Toggle("Show Git Status Labels", isOn: $settings.gitAuraEnabled)
             }
         }
     }

@@ -1,0 +1,55 @@
+/* Generated from FileManagerTheme.swift. Dark is the default. */
+:root, [data-theme="solarized-dark"] {
+  --frog-bg: #002b36;
+  --frog-bg2: #00222b;
+  --frog-panel: #073642;
+  --frog-panel2: #133e4a;
+  --frog-rule: #0f4452;
+  --frog-rule2: #1f4751;
+  --frog-selection: #04303c;
+  --frog-ink: #eee8d5;
+  --frog-ink2: #93a1a1;
+  --frog-ink3: #8c9b9b;
+  --frog-blue: #51a0d5;
+  --frog-good: #90a114;
+  --frog-bad: #e8776e;
+  --frog-warn: #bb9314;
+  --frog-cyan: #3ba89e;
+  --frog-violet: #9294cc;
+  --frog-raised-ink: #eee8d5;
+  --frog-raised-ink2: #97a5a5;
+  --frog-raised-ink3: #97a5a5;
+  --frog-raised-blue: #61a9d9;
+  --frog-raised-good: #9baa2b;
+  --frog-raised-bad: #eb867e;
+  --frog-raised-warn: #c29e2b;
+  --frog-raised-cyan: #4eb1a8;
+  --frog-raised-violet: #9c9ed1;
+}
+[data-theme="solarized-light"] {
+  --frog-bg: #fdf6e3;
+  --frog-bg2: #f6efdc;
+  --frog-panel: #eee8d5;
+  --frog-panel2: #e0ddcd;
+  --frog-rule: #d7d6c8;
+  --frog-rule2: #c5c8be;
+  --frog-selection: #f2ecd9;
+  --frog-ink: #51666c;
+  --frog-ink2: #4f6168;
+  --frog-ink3: #54686f;
+  --frog-blue: #1e6ca4;
+  --frog-good: #606e00;
+  --frog-bad: #c42c2a;
+  --frog-warn: #846400;
+  --frog-cyan: #1e746d;
+  --frog-violet: #5d61a9;
+  --frog-raised-ink: #50656b;
+  --frog-raised-ink2: #4f6168;
+  --frog-raised-ink3: #51646b;
+  --frog-raised-blue: #1c669a;
+  --frog-raised-good: #5a6800;
+  --frog-raised-bad: #b82928;
+  --frog-raised-warn: #7b5d00;
+  --frog-raised-cyan: #1c6c66;
+  --frog-raised-violet: #585b9f;
+}

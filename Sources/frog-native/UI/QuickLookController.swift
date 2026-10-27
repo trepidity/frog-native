@@ -8,7 +8,6 @@ struct QuickLookModifier: ViewModifier {
         content
             .onChange(of: url) { _, newURL in
                 if let newURL = newURL {
-                    print("QuickLook triggered for: \(newURL.path)")
                     QuickLookController.shared.show(url: newURL) {
                         self.url = nil
                     }

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct HelpGuideView: View {
+    @Environment(\.fileManagerPalette) private var theme
     @ObservedObject var paneState: PaneState
     
     var body: some View {
@@ -19,7 +20,7 @@ struct HelpGuideView: View {
                 }
                 .buttonStyle(.plain)
                 .font(.system(size: 10, weight: .bold))
-                .foregroundColor(.accentColor)
+                .foregroundColor(theme.ink.blue)
                 
                 Spacer()
                 
@@ -30,12 +31,12 @@ struct HelpGuideView: View {
                 
                 Image(systemName: "book.closed")
                     .font(.system(size: 10))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(theme.ink.secondary)
             }
             .padding(.horizontal, 12)
             .frame(height: 32)
-            .background(VisualEffectView(material: .headerView, blendingMode: .withinWindow))
-            .overlay(Divider(), alignment: .bottom)
+            .background(theme.bg2)
+            .overlay(ThemeDivider(), alignment: .bottom)
             
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
@@ -58,20 +59,23 @@ struct HelpGuideView: View {
                         GuideRow(key: "Space", desc: "Quick Look Preview")
                     }
                     
-                    GuideSection(title: "Reading the Light", icon: "lightbulb") {
-                        ColorInfo(color: .green, desc: "New Arrival (lasts 5s)")
-                        ColorInfo(color: .orange, desc: "Recent Change (Hot)")
-                        ColorInfo(color: .blue, desc: "Untouched (Cold)")
+                    GuideSection(title: "Solarized", icon: "paintpalette") {
+                        ColorInfo(color: theme.ink.blue, desc: "Folders and the focused selection bar")
+                        ColorInfo(color: theme.ink.good, desc: "Git: Added")
+                        ColorInfo(color: theme.ink.warn, desc: "Git: Modified")
+                        ColorInfo(color: theme.ink.bad, desc: "Git: Deleted")
+                        GuideRow(key: "⌘ ,", desc: "Choose Solarized Dark or Light in Preferences")
                     }
                 }
                 .padding(24)
             }
-            .background(VisualEffectView(material: .sidebar, blendingMode: .withinWindow))
+            .background(theme.bg)
         }
     }
 }
 
 struct GuideSection<Content: View>: View {
+    @Environment(\.fileManagerPalette) private var theme
     let title: String
     let icon: String
     let content: Content
@@ -89,7 +93,7 @@ struct GuideSection<Content: View>: View {
                 Text(title).bold()
             }
             .font(.system(size: 12))
-            .foregroundColor(.accentColor)
+            .foregroundColor(theme.ink.blue)
             
             VStack(alignment: .leading, spacing: 8) {
                 content
@@ -99,6 +103,7 @@ struct GuideSection<Content: View>: View {
 }
 
 struct GuideRow: View {
+    @Environment(\.fileManagerPalette) private var theme
     let key: String
     let desc: String
     
@@ -109,12 +114,13 @@ struct GuideRow: View {
                 .frame(width: 60, alignment: .leading)
             Text(desc)
                 .font(.system(size: 11))
-                .foregroundColor(.secondary)
+                .foregroundColor(theme.ink.secondary)
         }
     }
 }
 
 struct ColorInfo: View {
+    @Environment(\.fileManagerPalette) private var theme
     let color: Color
     let desc: String
     
@@ -125,7 +131,7 @@ struct ColorInfo: View {
                 .frame(width: 8, height: 8)
             Text(desc)
                 .font(.system(size: 11))
-                .foregroundColor(.secondary)
+                .foregroundColor(theme.ink.secondary)
         }
     }
 }
