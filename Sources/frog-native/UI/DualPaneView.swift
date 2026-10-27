@@ -11,26 +11,18 @@ struct DualPaneView: View {
                 FileBrowserPane(
                     paneState: state.left,
                     isFocused: state.focusedPane == .left,
-                    layout: state.currentLayout
+                    acceptsPointerActivation: !state.isCommandPalettePresented,
+                    activate: { activatePane(.left) }
                 )
                 .frame(minWidth: 300, maxWidth: .infinity)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    state.focusedPane = .left
-                    reclaimKeyboardFocus()
-                }
-                
+
                 FileBrowserPane(
                     paneState: state.right,
                     isFocused: state.focusedPane == .right,
-                    layout: state.currentLayout
+                    acceptsPointerActivation: !state.isCommandPalettePresented,
+                    activate: { activatePane(.right) }
                 )
                 .frame(minWidth: 300, maxWidth: .infinity)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    state.focusedPane = .right
-                    reclaimKeyboardFocus()
-                }
             }
             
             ThemeDivider()
@@ -102,9 +94,14 @@ struct DualPaneView: View {
         }
     }
 
+    private func activatePane(_ pane: PaneFocus) {
+        // Let the clicked native control keep its own first responder and selection.
+        if state.focusedPane != pane { state.focusedPane = pane }
+    }
+
     private func reclaimKeyboardFocus() {
         DispatchQueue.main.async {
-            guard !state.isCommandPalettePresented else { return }
+            guard !state.isCommandPalettePresented, case .browser = state.activePane.mode else { return }
             isKeyboardFocused = true
         }
     }

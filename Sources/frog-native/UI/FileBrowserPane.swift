@@ -5,10 +5,46 @@ struct FileBrowserPane: View {
     @Environment(\.fileManagerPalette) private var theme
     @ObservedObject var paneState: PaneState
     let isFocused: Bool
-    let layout: LayoutType
+    let acceptsPointerActivation: Bool
+    let activate: () -> Void
+    private var layout: LayoutType { paneState.currentLayout }
     
     var body: some View {
         VStack(spacing: 0) {
+            HStack(spacing: 6) {
+                AuraPathHeader(paneState: paneState)
+                    .frame(maxWidth: .infinity)
+                    .clipped()
+                Menu {
+                    ForEach(LayoutType.allCases, id: \.self) { choice in
+                        Button {
+                            activate()
+                            paneState.currentLayout = choice
+                        } label: {
+                            if choice == layout { Label(choice.rawValue, systemImage: "checkmark") } else { Text(choice.rawValue) }
+                        }
+                    }
+                } label: {
+                    Image(systemName: "rectangle.split.3x1")
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+                .help("Layout for this pane: \(layout.rawValue)")
+                .accessibilityLabel("\(paneState.id.capitalized) pane layout: \(layout.rawValue)")
+                Button {
+                    activate()
+                    paneState.setHiddenFilesVisible(!paneState.showHiddenFiles)
+                } label: {
+                    Image(systemName: paneState.showHiddenFiles ? "eye" : "eye.slash")
+                }
+                .buttonStyle(.plain)
+                .help("\(paneState.showHiddenFiles ? "Hide" : "Show") hidden files in this pane (⌘⇧.)")
+                .accessibilityLabel("\(paneState.id.capitalized) pane hidden files: \(paneState.showHiddenFiles ? "on" : "off")")
+            }
+            .padding(.trailing, 10)
+            .frame(height: 28)
+            .background(theme.bg2)
+            .overlay(ThemeDivider(), alignment: .bottom)
             switch paneState.mode {
             case .browser:
                 browserView
@@ -22,9 +58,11 @@ struct FileBrowserPane: View {
             }
         }
         .background(theme.bg)
+        .background(PaneActivationObserver(isEnabled: acceptsPointerActivation, activate: activate))
         .overlay(
             RoundedRectangle(cornerRadius: 0)
                 .stroke(isFocused ? theme.ink.blue : theme.rule, lineWidth: isFocused ? 2 : 1)
+                .allowsHitTesting(false)
         )
         .contextMenu {
             Button("Open") { paneState.navigateIn() }
@@ -47,16 +85,24 @@ struct FileBrowserPane: View {
         .auraQuickLookPreview($paneState.previewURL)
     }
 
+    private var columnCustomization: Binding<TableColumnCustomization<FileItem>> {
+        Binding(get: {
+            var customization = TableColumnCustomization<FileItem>()
+            for column in FileColumn.allCases {
+                customization[visibility: column.rawValue] = paneState.displayedColumns.contains(column) ? .visible : .hidden
+            }
+            return customization
+        }, set: { customization in
+            let columns = FileColumn.allCases.filter { customization[visibility: $0.rawValue] != .hidden }
+            paneState.setVisibleColumns(Set(columns))
+        })
+    }
+
     @ViewBuilder private var browserView: some View {
         VStack(spacing: 0) {
-            // Sticky Aura Breadcrumbs
-            if layout == .verticalTree {
-                AuraPathHeader(paneState: paneState)
-            }
-            
             // Content Body
             if layout == .classic {
-                List(paneState.items, selection: $paneState.selection) { item in
+                List(paneState.displayedItems, selection: $paneState.selection) { item in
                     HStack {
                         Image(systemName: item.isDirectory ? "folder.fill" : "doc.fill")
                             .foregroundColor(paneState.selection.contains(item.url) ? .primary : theme.ink.kind(for: item))
@@ -78,7 +124,7 @@ struct FileBrowserPane: View {
                 VerticalTreePane(paneState: paneState, isFocused: isFocused)
             } else {
                 // Table view for Pro and Staircase
-                Table(paneState.items, selection: $paneState.selection) {
+                Table(paneState.displayedItems, selection: $paneState.selection, columnCustomization: columnCustomization) {
                     TableColumn("Name") { item in
                         HStack {
                             Image(systemName: item.isDirectory ? "folder.fill" : "doc.fill")
@@ -87,19 +133,49 @@ struct FileBrowserPane: View {
                             Text(item.name).foregroundColor(paneState.selection.contains(item.url) ? .primary : theme.ink.name(for: item))
                         }
                     }
-                    
-                    TableColumn("Size") { item in
-                        Text(item.isDirectory ? "--" : ByteCountFormatter.string(fromByteCount: item.size, countStyle: .file))
+
+                    .customizationID(FileColumn.name.rawValue)
+                    .disabledCustomizationBehavior([.visibility, .reorder])
+
+                    TableColumn("Created") { item in
+                        FileMetadataCell(column: .created, item: item)
                             .foregroundColor(paneState.selection.contains(item.url) ? .primary : theme.ink.secondary)
-                            .font(.system(.body, design: .monospaced))
                     }
-                    .width(min: 80, max: 120)
-                    
+                    .width(min: 80, ideal: 120, max: 160)
+                    .customizationID(FileColumn.created.rawValue)
+                    .disabledCustomizationBehavior(.reorder)
+
                     TableColumn("Modified") { item in
-                        Text(item.modificationDate, style: .date)
+                        FileMetadataCell(column: .modified, item: item)
                             .foregroundColor(paneState.selection.contains(item.url) ? .primary : theme.ink.secondary)
                     }
-                    .width(min: 100, max: 150)
+                    .width(min: 80, ideal: 120, max: 160)
+                    .customizationID(FileColumn.modified.rawValue)
+                    .disabledCustomizationBehavior(.reorder)
+
+                    TableColumn("Dimensions") { item in
+                        FileMetadataCell(column: .dimensions, item: item)
+                            .foregroundColor(paneState.selection.contains(item.url) ? .primary : theme.ink.secondary)
+                    }
+                    .width(min: 80, ideal: 120, max: 160)
+                    .customizationID(FileColumn.dimensions.rawValue)
+                    .disabledCustomizationBehavior(.reorder)
+
+                    TableColumn("Type") { item in
+                        FileMetadataCell(column: .kind, item: item)
+                            .foregroundColor(paneState.selection.contains(item.url) ? .primary : theme.ink.secondary)
+                    }
+                    .width(min: 80, ideal: 120, max: 160)
+                    .customizationID(FileColumn.kind.rawValue)
+                    .disabledCustomizationBehavior(.reorder)
+
+                    TableColumn("Size") { item in
+                        FileMetadataCell(column: .size, item: item)
+                            .foregroundColor(paneState.selection.contains(item.url) ? .primary : theme.ink.secondary)
+                    }
+                    .width(min: 80, ideal: 120, max: 160)
+                    .customizationID(FileColumn.size.rawValue)
+                    .disabledCustomizationBehavior(.reorder)
                 }
                 .tableStyle(.inset)
                 .scrollContentBackground(.hidden)
@@ -171,40 +247,45 @@ struct VerticalTreePane: View {
     let isFocused: Bool
     
     var body: some View {
+        GeometryReader { geometry in
+            ScrollView(.horizontal) {
+                treeContent
+                    .frame(width: max(geometry.size.width, metadataWidth + 128), height: geometry.size.height)
+            }
+        }
+    }
+
+    private var metadataWidth: CGFloat {
+        paneState.displayedColumns.filter { $0 != .name }.reduce(0) { $0 + $1.treeWidth }
+    }
+
+    private var treeContent: some View {
         VStack(spacing: 0) {
             // Header Row
             HStack(spacing: 0) {
                 SortHeader(title: "Name", field: .name, paneState: paneState)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.leading, 32)
-                ThemeDivider(vertical: true).padding(.vertical, 4)
-                
-                if paneState.context == .assets {
-                    Text("Dimensions")
-                        .frame(width: 120, alignment: .leading)
-                        .padding(.leading, 8)
-                    ThemeDivider(vertical: true).padding(.vertical, 4)
-                    Text("Type")
-                        .frame(width: 120, alignment: .leading)
-                        .padding(.leading, 8)
-                } else {
-                    SortHeader(title: "Created", field: .created, paneState: paneState)
-                        .frame(width: 120, alignment: .leading)
-                        .padding(.leading, 8)
-                    ThemeDivider(vertical: true).padding(.vertical, 4)
-                    SortHeader(title: "Modified", field: .modified, paneState: paneState)
-                        .frame(width: 120, alignment: .leading)
-                        .padding(.leading, 8)
-                }
-                ThemeDivider(vertical: true).padding(.vertical, 4)
-                Text("Size")
-                    .frame(width: 80, alignment: .trailing)
+                ForEach(paneState.displayedColumns.filter { $0 != .name }) { column in
+                    Group {
+                        switch column {
+                        case .created: SortHeader(title: column.title, field: .created, paneState: paneState)
+                        case .modified: SortHeader(title: column.title, field: .modified, paneState: paneState)
+                        default: Text(column.title)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: column == .size ? .trailing : .leading)
                     .padding(.horizontal, 8)
+                    .frame(width: column.treeWidth)
+                    .overlay(alignment: .leading) { ThemeDivider(vertical: true).padding(.vertical, 4) }
+                }
             }
             .font(.system(size: 11, weight: .bold))
             .foregroundColor(theme.ink.secondary)
             .frame(height: 24)
             .background(theme.bg2)
+            .contentShape(Rectangle())
+            .contextMenu { ColumnVisibilityMenu(paneState: paneState) }
             
             ThemeDivider()
             
@@ -309,58 +390,13 @@ struct TreeRowView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            // Context-Aware Metadata Columns
-            if paneState.context == .assets {
-                Text(treeItem.item.dimensions ?? "--")
+            ForEach(paneState.displayedColumns.filter { $0 != .name }) { column in
+                FileMetadataCell(column: column, item: treeItem.item)
                     .font(.system(size: 10))
                     .foregroundColor(selected ? ink.primary : ink.secondary)
-                    .frame(width: 120, alignment: .leading)
-                    .padding(.leading, 8)
-                
-                Text(treeItem.item.fileTypeDescription ?? "--")
-                    .font(.system(size: 10))
-                    .foregroundColor(selected ? ink.primary : ink.secondary)
-                    .frame(width: 120, alignment: .leading)
-                    .padding(.leading, 8)
-            } else {
-                // Liquid Created Column
-                if treeItem.level < 5 {
-                    Text(treeItem.item.creationDate, style: treeItem.level < 3 ? .date : .offset)
-                        .font(.system(size: 10))
-                        .foregroundColor(selected ? ink.primary : ink.secondary)
-                        .frame(width: treeItem.level < 3 ? 120 : 80, alignment: .leading)
-                        .padding(.leading, 8)
-                } else {
-                    Image(systemName: "calendar.badge.plus")
-                        .font(.system(size: 8))
-                        .foregroundColor(ink.muted)
-                        .frame(width: 30)
-                }
-                
-                // Liquid Modified Column
-                if treeItem.level < 4 {
-                    Text(treeItem.item.modificationDate, style: treeItem.level < 2 ? .date : .offset)
-                        .font(.system(size: 10))
-                        .foregroundColor(selected ? ink.primary : ink.secondary)
-                        .frame(width: treeItem.level < 2 ? 120 : 80, alignment: .leading)
-                        .padding(.leading, 8)
-                } else {
-                    Image(systemName: "pencil.line")
-                        .font(.system(size: 8))
-                        .foregroundColor(ink.muted)
-                        .frame(width: 30)
-                }
+                    .padding(.horizontal, 8)
+                    .frame(width: column.treeWidth)
             }
-
-            Text(treeItem.item.isDirectory ? "--" : ByteCountFormatter.string(
-                fromByteCount: treeItem.item.size,
-                countStyle: .file
-            ))
-            .font(.system(size: 10, design: .monospaced))
-            .foregroundColor(selected ? ink.primary : ink.secondary)
-            .lineLimit(1)
-            .frame(width: 80, alignment: .trailing)
-            .padding(.horizontal, 8)
         }
         .padding(.vertical, 2)
         .background(SelectionBackground(selected: selected, focused: isFocused, hovered: isHovered || isTargeted))

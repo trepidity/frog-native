@@ -11,7 +11,7 @@ extension PaneState {
                 return "\(key.path):\(childPaths)"
             }
             .joined(separator: "|")
-        let key = "\(expandedKey)#\(itemKey)#\(childKey)#\(sortField)#\(sortOrder)"
+        let key = "\(expandedKey)#\(itemKey)#\(childKey)#\(sortField)#\(sortOrder)#\(showHiddenFiles)"
         if let cached = cachedVisibleItems, key == lastVisibleItemsKey {
             return cached
         }
@@ -19,8 +19,9 @@ extension PaneState {
         var result: [VisibleTreeItem] = []
 
         func addVisible(_ items: [FileItem], level: Int, parentLineStates: [Bool]) {
-            for (index, item) in items.enumerated() {
-                let isLast = index == items.count - 1
+            let displayed = showHiddenFiles ? items : items.filter { !$0.isHidden }
+            for (index, item) in displayed.enumerated() {
+                let isLast = index == displayed.count - 1
                 result.append(
                     VisibleTreeItem(
                         item: item,

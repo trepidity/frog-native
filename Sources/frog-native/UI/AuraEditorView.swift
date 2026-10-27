@@ -72,7 +72,8 @@ struct AuraEditorView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 if isMarkdown && isPreviewingMarkdown {
-                    MarkdownView(text: text)
+                    MarkdownView(text: text, documentURL: url, openFile: { paneState.smartOpen($0) })
+                        .id(url)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 } else {
                     TextEditor(text: $text)
@@ -87,6 +88,10 @@ struct AuraEditorView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .onAppear {
+            loadFile()
+        }
+        .onChange(of: url) { _, _ in
+            isLoading = true
             loadFile()
         }
         .onChange(of: isLoading) { _, newValue in
@@ -109,6 +114,7 @@ struct AuraEditorView: View {
         DispatchQueue.global(qos: .userInitiated).async {
             let content = (try? String(contentsOf: url)) ?? ""
             DispatchQueue.main.async {
+                guard paneState.mode == .editor(url) else { return }
                 self.text = content
                 self.isLoading = false
             }
@@ -125,35 +131,5 @@ struct AuraEditorView: View {
     
     private func saveFile() {
         try? text.write(to: url, atomically: true, encoding: .utf8)
-    }
-}
-
-struct MarkdownView: View {
-    @Environment(\.fileManagerPalette) private var theme
-    let text: String
-    
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-                // Simple Markdown-ish preview for the prototype
-                ForEach(text.components(separatedBy: "\n"), id: \.self) { line in
-                    if line.hasPrefix("#") {
-                        Text(line.replacingOccurrences(of: "#", with: ""))
-                            .font(.title2)
-                            .bold()
-                    } else if line.hasPrefix("-") || line.hasPrefix("*") {
-                        HStack(alignment: .top) {
-                            Text("•")
-                            Text(line.dropFirst().trimmingCharacters(in: .whitespaces))
-                        }
-                    } else {
-                        Text(line)
-                    }
-                }
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .background(theme.bg)
     }
 }

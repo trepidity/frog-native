@@ -32,9 +32,5 @@ class AuraSettings: ObservableObject {
     @AppStorage("aura.gitAuraEnabled")
     var gitAuraEnabled: Bool = true
 
-    // Layout Defaults
-    @AppStorage("aura.defaultLayout")
-    var defaultLayout: String = "verticalTree"
-
     private init() {}
 }

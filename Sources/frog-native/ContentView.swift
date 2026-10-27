@@ -11,28 +11,39 @@ struct ContentView: View {
             
             VStack(spacing: 0) {
                 // Header
-                HStack {
+                HStack(alignment: .top) {
                     Text("Frog Native")
                         .font(.system(size: 13, weight: .bold))
+                        .frame(height: 28)
                         .padding(.leading, 80) // Space for traffic lights
                     Spacer()
-                    
+
                     Button(action: { state.isCommandPalettePresented.toggle() }) {
-                        Image(systemName: "magnifyingglass")
-                        Text("Search or Action...")
-                        Text("⌘K").foregroundStyle(theme.ink.secondary)
+                        HStack(spacing: 6) {
+                            Image(systemName: "magnifyingglass")
+                            Text("Search or Action...")
+                            Text("⌘K").foregroundStyle(theme.ink.secondary)
+                        }
+                        .font(.system(size: 13))
+                        .padding(.horizontal, 12)
+                        .frame(height: 36)
+                        .background(theme.panel2, in: RoundedRectangle(cornerRadius: 6))
+                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(theme.rule2, lineWidth: 1))
+                        .contentShape(RoundedRectangle(cornerRadius: 6))
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.plain)
                     .keyboardShortcut("k", modifiers: .command)
-                    .padding(8)
+                    .padding(.vertical, 4)
+                    .padding(.trailing, 8)
                 }
-                .frame(height: 40)
+                .frame(height: 44)
                 .background(theme.bg2)
                 
                 ThemeDivider()
                 
                 DualPaneView(state: state)
             }
+            .ignoresSafeArea(.container, edges: .top)
             .blur(radius: state.isCommandPalettePresented ? 10 : 0)
             
             if state.isCommandPalettePresented {

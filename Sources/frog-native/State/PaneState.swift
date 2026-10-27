@@ -30,10 +30,54 @@ struct VisibleTreeItem: Identifiable {
 @MainActor
 class PaneState: ObservableObject {
     let id: String
+    private let preferences: UserDefaults
+    @Published private var columnSelection: Set<FileColumn>?
+    var displayedColumns: [FileColumn] {
+        let defaults: Set<FileColumn>
+        if currentLayout == .verticalTree {
+            defaults = context == .assets ? [.name, .dimensions, .kind, .size] : [.name, .created, .modified, .size]
+        } else {
+            defaults = [.name, .modified, .size]
+        }
+        let selected = columnSelection ?? defaults
+        return FileColumn.allCases.filter { $0 == .name || selected.contains($0) }
+    }
+
+    func setColumnVisible(_ column: FileColumn, _ visible: Bool) {
+        guard column != .name else { return }
+        var columns = Set(displayedColumns)
+        if visible { columns.insert(column) } else { columns.remove(column) }
+        setVisibleColumns(columns)
+    }
+
+    func setVisibleColumns(_ columns: Set<FileColumn>) {
+        let selected = columns.union([.name])
+        guard selected != columnSelection else { return }
+        columnSelection = selected
+        preferences.set(FileColumn.allCases.filter { selected.contains($0) }.map(\.rawValue), forKey: "pane.\(id).columns")
+    }
+
+    func resetColumns() {
+        columnSelection = nil
+        preferences.removeObject(forKey: "pane.\(id).columns")
+    }
+    @Published var currentLayout: LayoutType = .verticalTree {
+        didSet { preferences.set(currentLayout.rawValue, forKey: "pane.\(id).layout") }
+    }
     @Published var currentDirectory: URL
     @Published var mode: PaneMode = .browser
     @Published var items: [FileItem] = []
     @Published var selection: Set<URL> = []
+    @Published private(set) var showHiddenFiles = true
+    var displayedItems: [FileItem] { showHiddenFiles ? items : items.filter { !$0.isHidden } }
+
+    func setHiddenFilesVisible(_ visible: Bool) {
+        showHiddenFiles = visible
+        preferences.set(visible, forKey: "pane.\(id).showHiddenFiles")
+        if !visible {
+            selection.formIntersection(Set(visibleItems.map(\.id)))
+        }
+    }
 
     @Published var expandedItems: Set<URL> = []
     @Published var itemChildren: [URL: [FileItem]] = [:]
@@ -69,8 +113,16 @@ class PaneState: ObservableObject {
 
     static let shouldRefreshPanes = Notification.Name("shouldRefreshPanes")
 
-    init(id: String, directory: URL) {
+    init(id: String, directory: URL, preferences: UserDefaults = .standard) {
         self.id = id
+        self.preferences = preferences
+        if let columns = preferences.stringArray(forKey: "pane.\(id).columns") {
+            self.columnSelection = Set(columns.compactMap(FileColumn.init(rawValue:))).union([.name])
+        }
+        let layout = preferences.string(forKey: "pane.\(id).layout") ?? preferences.string(forKey: "browser.currentLayout")
+        self.currentLayout = layout.flatMap(LayoutType.init(rawValue:)) ?? .verticalTree
+        self.showHiddenFiles = preferences.object(forKey: "pane.\(id).showHiddenFiles") as? Bool
+            ?? preferences.object(forKey: "browser.showHiddenFiles") as? Bool ?? true
 
         if let savedPath = UserDefaults.standard.string(forKey: "pane.\(id).currentDirectory"),
            FileManager.default.fileExists(atPath: savedPath) {
@@ -78,6 +130,10 @@ class PaneState: ObservableObject {
         } else {
             self.currentDirectory = directory
         }
+
+        // Snapshot legacy shared values once; later changes belong only to this pane.
+        preferences.set(currentLayout.rawValue, forKey: "pane.\(id).layout")
+        preferences.set(showHiddenFiles, forKey: "pane.\(id).showHiddenFiles")
 
         if let savedExpanded = UserDefaults.standard.stringArray(forKey: "pane.\(id).expandedItems") {
             self.expandedItems = Set(savedExpanded.map { URL(fileURLWithPath: $0) })

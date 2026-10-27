@@ -70,6 +70,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc
+    func toggleHiddenFiles() {
+        let pane = state.activePane
+        pane.setHiddenFilesVisible(!pane.showHiddenFiles)
+    }
+
+    @objc
     func focusLeftPane() {
         state.focusedPane = .left
     }
@@ -144,7 +150,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
         prefsWindow.center()
         prefsWindow.title = "Aura Preferences"
-        prefsWindow.contentView = NSHostingView(rootView: PreferencesView().fileManagerTheme())
+        prefsWindow.contentView = NSHostingView(rootView: PreferencesView(browser: state).fileManagerTheme())
 
         self.preferencesWindow = prefsWindow
         prefsWindow.makeKeyAndOrderFront(nil)

@@ -104,6 +104,12 @@ extension AppDelegate {
 
     private func buildViewMenuItem() -> NSMenuItem {
         let viewMenu = NSMenu(title: "View")
+        let hiddenItem = viewMenu.addItem(
+            withTitle: "Toggle Hidden Files in Active Pane",
+            action: #selector(toggleHiddenFiles),
+            keyEquivalent: "."
+        )
+        hiddenItem.keyEquivalentModifierMask = [.command, .shift]
         viewMenu.addItem(
             withTitle: "Command Palette...",
             action: #selector(toggleCommandPalette),

@@ -19,19 +19,8 @@ class BrowserState: ObservableObject {
     @Published var right: PaneState
     @Published var focusedPane: PaneFocus = .left
     @Published var isCommandPalettePresented: Bool = false
-    @Published var currentLayout: LayoutType = .verticalTree {
-        didSet {
-            UserDefaults.standard.set(currentLayout.rawValue, forKey: "browser.currentLayout")
-        }
-    }
-    
-    init() {
-        // Restore layout
-        if let savedLayout = UserDefaults.standard.string(forKey: "browser.currentLayout"),
-           let layout = LayoutType(rawValue: savedLayout) {
-            self.currentLayout = layout
-        }
 
+    init() {
         let home = FileManager.default.homeDirectoryForCurrentUser
         let downloads = home.appendingPathComponent("Downloads")
         

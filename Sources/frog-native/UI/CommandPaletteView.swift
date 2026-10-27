@@ -81,8 +81,8 @@ struct CommandPaletteView: View {
 
         // Add layout switching actions
         for layout in LayoutType.allCases {
-            baseActions.append(CommandAction(title: "Switch to \(layout.rawValue) Layout", icon: "square.grid.2x2") {
-                state.currentLayout = layout
+            baseActions.append(CommandAction(title: "Active Pane: \(layout.rawValue) Layout", icon: "square.grid.2x2") {
+                state.activePane.currentLayout = layout
             })
         }
 
@@ -128,38 +128,41 @@ struct CommandPaletteView: View {
 
             ThemeDivider()
 
-            // Results List
-            Group {
-                if !combinedResults.isEmpty {
-                    ScrollViewReader { proxy in
-                        List(0..<combinedResults.count, id: \.self) { index in
-                            resultRow(for: combinedResults[index], at: index)
-                                .id(index)
-                                .listRowBackground(theme.panel)
-                                .listRowSeparator(.hidden)
+            // Keep every search state inside the same content area.
+            VStack(spacing: 0) {
+                Group {
+                    if !combinedResults.isEmpty {
+                        ScrollViewReader { proxy in
+                            List(0..<combinedResults.count, id: \.self) { index in
+                                resultRow(for: combinedResults[index], at: index)
+                                    .id(index)
+                                    .listRowBackground(theme.panel)
+                                    .listRowSeparator(.hidden)
+                            }
+                            .listStyle(.plain)
+                            .scrollContentBackground(.hidden)
+                            .background(theme.panel)
+                            .onChange(of: selectedIndex) { _, newIndex in
+                                schedulePreview(for: newIndex)
+                                proxy.scrollTo(newIndex)
+                            }
                         }
-                        .listStyle(.plain)
-                        .scrollContentBackground(.hidden)
-                        .background(theme.panel)
-                        .frame(maxHeight: 400)
-                        .onChange(of: selectedIndex) { _, newIndex in
-                            schedulePreview(for: newIndex)
-                            proxy.scrollTo(newIndex)
-                        }
+                    } else {
+                        noResultsView
                     }
-                } else {
-                    noResultsView
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                if let message = navigationError ?? search.errorMessage {
+                    Text(message)
+                        .font(.caption)
+                        .foregroundColor(theme.ink.secondary)
+                        .padding(8)
                 }
             }
+            .frame(height: 400)
 
             ThemeDivider()
-
-            if let message = navigationError ?? search.errorMessage {
-                Text(message)
-                    .font(.caption)
-                    .foregroundColor(theme.ink.secondary)
-                    .padding(8)
-            }
 
             // Footer Hints
             HStack {
@@ -174,7 +177,7 @@ struct CommandPaletteView: View {
             .padding(.vertical, 8)
             .background(theme.bg2)
         }
-        .frame(width: 550)
+        .frame(width: 550, height: 478)
         .background(theme.panel)
         .cornerRadius(12)
         .overlay(
@@ -295,11 +298,13 @@ struct CommandPaletteView: View {
             let targetPane = state.activePane
             let originalDirectory = targetPane.currentDirectory
             navigationTask = Task {
-                let work = Task.detached(priority: .userInitiated) { () -> SearchEntry? in
+                let work = Task.detached(priority: .userInitiated) { () -> (entry: SearchEntry, hidden: Bool)? in
                     guard !Task.isCancelled else { return nil }
                     var directory: ObjCBool = false
                     guard FileManager.default.fileExists(atPath: item.url.path, isDirectory: &directory) else { return nil }
-                    return SearchEntry(url: item.url, isDirectory: directory.boolValue)
+                    let hidden = item.url.lastPathComponent.hasPrefix(".") ||
+                        ((try? item.url.resourceValues(forKeys: [.isHiddenKey]).isHidden) == true)
+                    return (SearchEntry(url: item.url, isDirectory: directory.boolValue), hidden)
                 }
                 let resolved = await withTaskCancellationHandler { await work.value } onCancel: { work.cancel() }
                 guard !Task.isCancelled, version == navigationGeneration, state.isCommandPalettePresented,
@@ -308,10 +313,12 @@ struct CommandPaletteView: View {
                     navigationError = "This item has moved, was deleted, or is not accessible."
                     return
                 }
-                if openDirectly && !resolved.isDirectory {
-                    targetPane.smartOpen(resolved.url)
+                if openDirectly && !resolved.entry.isDirectory {
+                    targetPane.smartOpen(resolved.entry.url)
                 } else {
-                    targetPane.jump(to: resolved)
+                    // An explicit search reveal must not select an invisible row.
+                    if resolved.hidden && !resolved.entry.isDirectory { targetPane.setHiddenFilesVisible(true) }
+                    targetPane.jump(to: resolved.entry)
                 }
                 state.isCommandPalettePresented = false
                 NotificationCenter.default.post(name: NSNotification.Name("reclaimAuraFocus"), object: nil)

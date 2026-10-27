@@ -48,8 +48,8 @@ extension PaneState {
         guard item.isDirectory else { return }
         if !expandedItems.contains(item.url) {
             toggleExpansion(for: item)
-        } else if let children = itemChildren[item.url], !children.isEmpty {
-            selection = [children[0].url]
+        } else if let child = itemChildren[item.url]?.first(where: { showHiddenFiles || !$0.isHidden }) {
+            selection = [child.url]
         }
     }
 

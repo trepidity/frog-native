@@ -1,12 +1,13 @@
 import SwiftUI
 
 struct PreferencesView: View {
+    @ObservedObject var browser: BrowserState
     @Environment(\.fileManagerPalette) private var theme
     @StateObject private var settings = AuraSettings.shared
     
     var body: some View {
         TabView {
-            GeneralPreferencesView(settings: settings)
+            GeneralPreferencesView(browser: browser)
                 .tabItem {
                     Label("General", systemImage: "gearshape")
                 }
@@ -28,21 +29,32 @@ struct PreferencesView: View {
 }
 
 struct GeneralPreferencesView: View {
-    @ObservedObject var settings: AuraSettings
+    @ObservedObject var browser: BrowserState
     
     var body: some View {
         Form {
-            Section("Layout") {
-                Picker("Default Layout", selection: $settings.defaultLayout) {
-                    Text("Vertical Tree").tag("verticalTree")
-                    Text("Pro Table").tag("proTable")
-                    Text("Classic List").tag("classic")
-                    Text("Staircase").tag("staircase")
-                }
+            Section("Left Pane") {
+                PanePreferencesView(pane: browser.left)
             }
-            
-
+            Section("Right Pane") {
+                PanePreferencesView(pane: browser.right)
+            }
         }
+    }
+}
+
+private struct PanePreferencesView: View {
+    @ObservedObject var pane: PaneState
+
+    var body: some View {
+        Picker("Layout", selection: $pane.currentLayout) {
+            ForEach(LayoutType.allCases, id: \.self) { layout in
+                Text(layout.rawValue).tag(layout)
+            }
+        }
+        Toggle("Show hidden files and folders", isOn: Binding(
+            get: { pane.showHiddenFiles }, set: { pane.setHiddenFilesVisible($0) }
+        ))
     }
 }
 
