@@ -20,24 +20,24 @@ struct ContentView: View {
                     Spacer()
 
                     Button(action: { state.isCommandPalettePresented.toggle() }) {
-                        HStack(spacing: 6) {
+                        HStack(spacing: 5) {
                             Image(systemName: "magnifyingglass")
                             Text("Search or Action...")
                             Text("⌘K").foregroundStyle(theme.ink.secondary)
                         }
-                        .font(.system(size: 13))
-                        .padding(.horizontal, 12)
-                        .frame(height: 36)
-                        .background(theme.panel2, in: RoundedRectangle(cornerRadius: 6))
-                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(theme.rule2, lineWidth: 1))
-                        .contentShape(RoundedRectangle(cornerRadius: 6))
+                        .font(.system(size: 11))
+                        .padding(.horizontal, 8)
+                        .frame(height: 24)
+                        .background(theme.panel2, in: RoundedRectangle(cornerRadius: 5))
+                        .overlay(RoundedRectangle(cornerRadius: 5).stroke(theme.rule2, lineWidth: 1))
+                        .contentShape(RoundedRectangle(cornerRadius: 5))
                     }
                     .buttonStyle(.plain)
                     .keyboardShortcut("k", modifiers: .command)
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 2)
                     .padding(.trailing, 8)
                 }
-                .frame(height: 44)
+                .frame(height: 28)
                 .background(theme.bg2)
                 
                 ThemeDivider()

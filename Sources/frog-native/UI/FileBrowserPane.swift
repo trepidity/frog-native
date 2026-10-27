@@ -65,24 +65,7 @@ struct FileBrowserPane: View {
                 .stroke(isFocused ? theme.ink.blue : theme.rule, lineWidth: isFocused ? 2 : 1)
                 .allowsHitTesting(false)
         )
-        .contextMenu {
-            Button("Open") { paneState.navigateIn() }
-            Button("Open with Default App") { 
-                if let selectedID = paneState.selection.first,
-                   let item = paneState.visibleItems.first(where: { $0.id == selectedID }) {
-                    NSWorkspace.shared.open(item.item.url)
-                }
-            }
-            Button("Reveal in Finder") { NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: paneState.currentDirectory.path) }
-            Divider()
-            Button("New Folder") { paneState.createNewFolder() }
-            Button("Rename...") { 
-                print("Rename requested") 
-            }
-            Button("Move to Trash") { paneState.confirmMoveSelectionToTrash() }
-            Divider()
-            Button("Copy Path") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(paneState.currentDirectory.path, forType: .string) }
-        }
+        .contextMenu { FileBrowserContextMenu(paneState: paneState) }
         .auraQuickLookPreview($paneState.previewURL)
     }
 
@@ -109,7 +92,7 @@ struct FileBrowserPane: View {
                             .foregroundColor(paneState.selection.contains(item.url) ? .primary : theme.ink.kind(for: item))
                         Text(item.name).foregroundColor(paneState.selection.contains(item.url) ? .primary : theme.ink.name(for: item))
                     }
-                    .onDrag {
+                    .itemProvider {
                         NSItemProvider(object: item.url as NSURL)
                     }
                 }
@@ -184,6 +167,29 @@ struct FileBrowserPane: View {
                 .background(theme.background)
             }
         }
+    }
+}
+
+private struct FileBrowserContextMenu: View {
+    @ObservedObject var paneState: PaneState
+
+    var body: some View {
+        Button("Open") { paneState.navigateIn() }
+        Button("Open with Default App") {
+            if let selectedID = paneState.selection.first,
+               let item = paneState.visibleItems.first(where: { $0.id == selectedID }) {
+                NSWorkspace.shared.open(item.item.url)
+            }
+        }
+        Button("Reveal in Finder") { NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: paneState.currentDirectory.path) }
+        Divider()
+        Button("New Folder") { paneState.createNewFolder() }
+        Button("Rename...") {
+            print("Rename requested")
+        }
+        Button("Move to Trash") { paneState.confirmMoveSelectionToTrash() }
+        Divider()
+        Button("Copy Path") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(paneState.currentDirectory.path, forType: .string) }
     }
 }
 
@@ -292,7 +298,7 @@ struct VerticalTreePane: View {
             ThemeDivider()
             
             ScrollViewReader { proxy in
-                List {
+                List(selection: $paneState.selection) {
                     ForEach(paneState.visibleItems) { treeItem in
                         TreeRowView(
                             treeItem: treeItem,
@@ -300,16 +306,25 @@ struct VerticalTreePane: View {
                             isFocused: isFocused
                         )
                         .id(treeItem.id) // Set ID for scrolling
+                        .tag(treeItem.id)
+                        .itemProvider { NSItemProvider(object: treeItem.item.url as NSURL) }
                         .listRowInsets(EdgeInsets())
                         .listRowSeparator(.hidden)
                         .listRowBackground(theme.background)
                     }
                 }
+                .contextMenu(forSelectionType: URL.self) { _ in
+                    FileBrowserContextMenu(paneState: paneState)
+                } primaryAction: { selection in
+                    guard let item = paneState.visibleItems.first(where: { selection.contains($0.id) }) else { return }
+                    paneState.activate(item.item)
+                }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
                 .background(theme.background)
                 .onChange(of: paneState.selection) { _, newSelection in
-                    if let first = newSelection.first {
+                    SoundManager.shared.play(.click)
+                    if newSelection.count == 1, let first = newSelection.first {
                         // Keep visible rows stationary between clicks. Keyboard and
                         // search selection still reveal rows outside the viewport.
                         proxy.scrollTo(first)
@@ -408,22 +423,8 @@ struct TreeRowView: View {
             if isTargeted { Rectangle().stroke(theme.ink.blue, lineWidth: 2) }
         }
         .contentShape(Rectangle())
-        .simultaneousGesture(
-            TapGesture(count: 2).onEnded {
-                paneState.activate(treeItem.item)
-            }
-        )
-        .simultaneousGesture(
-            TapGesture().onEnded {
-                SoundManager.shared.play(.click)
-                paneState.selection = [treeItem.id]
-            }
-        )
         .onHover { hovering in
             isHovered = hovering
-        }
-        .onDrag {
-            NSItemProvider(object: treeItem.item.url as NSURL)
         }
         .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
             if treeItem.item.isDirectory {

@@ -49,11 +49,14 @@ struct DualPaneView: View {
             state.toggleFocus()
             return .handled
         }
-        .onKeyPress(.upArrow) {
+        .onKeyPress(.upArrow, phases: [.down, .repeat]) { press in
+            // Let the native list extend or contract its selection range.
+            guard !press.modifiers.contains(.shift) else { return .ignored }
             state.activePane.selectPrevious()
             return .handled
         }
-        .onKeyPress(.downArrow) {
+        .onKeyPress(.downArrow, phases: [.down, .repeat]) { press in
+            guard !press.modifiers.contains(.shift) else { return .ignored }
             state.activePane.selectNext()
             return .handled
         }

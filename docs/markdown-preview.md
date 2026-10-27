@@ -12,6 +12,9 @@ verify typography and header alignment in the native app with a public fixture.
 The header's title and search control belong on the same horizontal row as the native
 window controls. Remove the extra safe-area offset rather than drawing replacement
 traffic lights. Preserve the system controls and window behavior.
+The Search/Action control is 24 points high inside the 28-point header, with
+11-point text and compact padding. Verify its bounds and alignment in the native
+window and confirm both clicking it and Command-K still open the palette.
 
 ## Hidden files
 
@@ -40,6 +43,17 @@ observes native mouse-down events without consuming them; editor clicks retain t
 focus. Disable this observation while the search modal is open so it cannot activate
 the obscured pane beneath it.
 
+## Multiple selection
+
+Verify selection at the native input seam in Vertical Tree: click a file, then
+Shift-Down twice. Three adjacent rows and the status-bar count must agree;
+Shift-Up contracts the range. Command-click adds/removes a separate row,
+Shift-click selects a range, and an unmodified click returns to one row.
+Repeat across expanded folder children and in the other pane; selection in one
+pane must not change the other. Double-click activation and disclosure expansion
+must still work. This catches a row gesture replacing the selection with one URL
+or a missing list selection binding; do not substitute a test of SwiftUI itself.
+
 ## Column visibility
 
 Right-click a column header to toggle metadata columns or restore the defaults.
@@ -49,3 +63,8 @@ Both header cells and row cells consume `PaneState.displayedColumns`, an ordered
 rendering seam. Verify column names before/after toggles, pane isolation, and reopening
 from an isolated preferences domain. Native QA checks header menu precedence, cell/header
 alignment, restored columns, and normal file context menus on rows.
+
+Created and Modified use localized relative calendar dates (Today, Yesterday,
+Tomorrow) and medium calendar dates otherwise. Hover reveals the full date and
+time. Verify both columns in the native tree/table using files with recent and
+older timestamps; the relative label must not change sorting by actual dates.

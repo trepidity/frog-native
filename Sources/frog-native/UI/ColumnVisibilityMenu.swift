@@ -23,11 +23,24 @@ struct FileMetadataCell: View {
     let column: FileColumn
     let item: FileItem
 
+    private static let friendlyDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        formatter.doesRelativeDateFormatting = true
+        return formatter
+    }()
+
+    private func dateLabel(_ date: Date) -> some View {
+        Text(date, formatter: Self.friendlyDateFormatter)
+            .help(date.formatted(date: .complete, time: .complete))
+    }
+
     var body: some View {
         Group {
             switch column {
-            case .created: Text(item.creationDate, style: .date)
-            case .modified: Text(item.modificationDate, style: .date)
+            case .created: dateLabel(item.creationDate)
+            case .modified: dateLabel(item.modificationDate)
             case .dimensions: Text(item.dimensions ?? "--")
             case .kind: Text(item.fileTypeDescription ?? "--")
             case .size:

@@ -23,6 +23,13 @@ Type an absolute path or `~/` path for direct navigation and path completion. Hi
 
 Double-click a directory breadcrumb above the tree to browse that directory.
 
+### Selecting files
+
+- **`Cmd + Click`**: Add or remove individual files from the selection.
+- **`Shift + Click`** or **`Shift + Up / Down`**: Select a contiguous range.
+- **`Cmd + A`**: Select all rows in the focused file list.
+- **Click** without modifiers to return to a single selection.
+
 ### Actions
 - **`Cmd + N`**: Create a new "Untitled Folder".
 - **`Cmd + Backspace`**: Move selected item(s) to system Trash.
