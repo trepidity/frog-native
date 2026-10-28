@@ -66,7 +66,9 @@ class PaneState: ObservableObject {
     }
     @Published var currentDirectory: URL
     @Published var mode: PaneMode = .browser
-    @Published var items: [FileItem] = []
+    @Published var items: [FileItem] = [] {
+        didSet { cachedVisibleItems = nil }
+    }
     @Published var selection: Set<URL> = []
     @Published private(set) var showHiddenFiles = true
     var displayedItems: [FileItem] { showHiddenFiles ? items : items.filter { !$0.isHidden } }
@@ -80,7 +82,9 @@ class PaneState: ObservableObject {
     }
 
     @Published var expandedItems: Set<URL> = []
-    @Published var itemChildren: [URL: [FileItem]] = [:]
+    @Published var itemChildren: [URL: [FileItem]] = [:] {
+        didSet { cachedVisibleItems = nil }
+    }
 
     @Published var sortField: SortField = .name
     @Published var sortOrder: SortOrder = .ascending
@@ -90,7 +94,12 @@ class PaneState: ObservableObject {
 
     @Published var previewURL: URL?
     @Published var renameTarget: FileItem?
-    @Published var soloRoot: URL?
+    @Published var soloRoot: URL? {
+        didSet {
+            guard oldValue?.canonicalDirectoryURL.path != soloRoot?.canonicalDirectoryURL.path else { return }
+            startDirectoryMonitor()
+        }
+    }
     @Published var isPathLoading: Bool = false
 
     @Published var context: FolderContext = .standard
@@ -111,6 +120,12 @@ class PaneState: ObservableObject {
 
     var cachedVisibleItems: [VisibleTreeItem]?
     var lastVisibleItemsKey: String = ""
+    var directoryMonitor: DirectoryChangeMonitor?
+    var directoryMonitorGeneration = 0
+    var monitoredRoot: String?
+    var pendingDirectoryEvents: [String] = []
+    var pendingDirectoryRescan = false
+    var directoryRefreshTask: Task<Void, Never>?
 
     static let shouldRefreshPanes = Notification.Name("shouldRefreshPanes")
 
@@ -144,6 +159,7 @@ class PaneState: ObservableObject {
         wireSubscriptions()
         // Restore children asynchronously so large saved folders cannot block launch.
         refreshExpandedItems()
+        startDirectoryMonitor()
     }
 
     private func wireSubscriptions() {
@@ -169,6 +185,7 @@ class PaneState: ObservableObject {
             .sink { [weak self] url in
                 guard let self = self else { return }
                 UserDefaults.standard.set(url.path, forKey: "pane.\(self.id).currentDirectory")
+                self.startDirectoryMonitor()
             }
             .store(in: &cancellables)
 
