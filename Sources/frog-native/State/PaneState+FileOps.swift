@@ -27,22 +27,6 @@ extension PaneState {
         }
     }
 
-    func renameSelected(to newName: String) {
-        guard let selectedID = selection.first,
-              let treeItem = visibleItems.first(where: { $0.id == selectedID }) else { return }
-        let item = treeItem.item
-        let newURL = item.url.deletingLastPathComponent().appendingPathComponent(newName)
-        do {
-            try FileManager.default.moveItem(at: item.url, to: newURL)
-            loadContents()
-            if let newItem = items.first(where: { $0.url.path == newURL.path }) {
-                selection = [newItem.url]
-            }
-        } catch {
-            print("Error renaming item: \(error)")
-        }
-    }
-
     func moveItem(at sourceURL: URL, to destinationDirectory: URL) {
         let destinationURL = destinationDirectory.appendingPathComponent(sourceURL.lastPathComponent)
         guard sourceURL.path != destinationURL.path else { return }

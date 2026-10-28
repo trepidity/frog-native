@@ -1,13 +1,13 @@
-# 🐸 Frog Native: The Aura Experience
+# 🐸 Frog: The Aura Experience
 
 ### *Climb the Staircase. Sense the Filesystem.*
 
-**Frog Native** is a next-generation, spatially-aware dual-pane file manager for macOS. It moves beyond the flat, mechanical lists of traditional managers and introduces the **Aura Design System**—an immersive environment where hierarchy is felt through light, depth, and sound.
+**Frog** is a next-generation, spatially-aware dual-pane file manager for macOS. It moves beyond the flat, mechanical lists of traditional managers and introduces the **Aura Design System**—an immersive environment where hierarchy is felt through light, depth, and sound.
 
 ---
 
 ## 🌟 The Aura Philosophy
-Designed for designers and developers who live in their files, Frog Native treats the filesystem as a physical structure. 
+Designed for designers and developers who live in their files, Frog treats the filesystem as a physical structure.
 
 - **🪜 The Staircase:** A high-performance vertical tree that visualizes directory depth through recursive indentation and glowing guide lines.
 - **🌈 Solarized Themes:** Solarized Dark is the default. Choose Dark or Light in **Preferences → Appearance** (Cmd+,); the choice applies immediately and persists across launches.
@@ -30,7 +30,7 @@ Press **Cmd+K** to search filenames and folders across this Mac, including hidde
 See [search architecture and measured performance](docs/universal-search.md).
 
 ### 🚪 Aura Portal (Integrated Editing)
-Double-click a file to "enter the portal." 
+Double-click a file to "enter the portal."
 - **Native Viewers:** High-fidelity rendering for Markdown and JSON.
 - **In-App Edits:** Modify and save project files without ever leaving your Aura workspace.
 - **Smart Open:** Automatically chooses between the internal Portal or your favorite native macOS tools.
@@ -65,8 +65,8 @@ See [the asset guide](Assets/README.md) and [preview board](Assets/Preview/asset
 Built with **"Owl-Like" Thinking**—observing user behavior to create a tool that is as silent and powerful as a predator, yet as fluid and beautiful as a work of art.
 
 ## 📄 License
-Frog Native is licensed under the **MIT License + Commons Clause**.
+Frog is licensed under the **MIT License + Commons Clause**.
 
-Anyone may use, copy, modify, publish, distribute, and sublicense the software, but the software may not be sold as a product or service whose value derives substantially from Frog Native.
+Anyone may use, copy, modify, publish, distribute, and sublicense the software, but the software may not be sold as a product or service whose value derives substantially from Frog.
 
 See [LICENSE](LICENSE) for the full terms.

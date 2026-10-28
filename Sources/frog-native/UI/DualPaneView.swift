@@ -5,6 +5,7 @@ struct DualPaneView: View {
     private var theme
     @ObservedObject var state: BrowserState
     @FocusState private var isKeyboardFocused: Bool
+    private var isRenaming: Bool { state.left.renameTarget != nil || state.right.renameTarget != nil }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -45,34 +46,44 @@ struct DualPaneView: View {
         .onChange(of: state.isCommandPalettePresented) { _, presented in
             if presented { isKeyboardFocused = false } else { reclaimKeyboardFocus() }
         }
+        .onChange(of: isRenaming) { _, presented in
+            if presented { isKeyboardFocused = false } else { reclaimKeyboardFocus() }
+        }
         .onKeyPress(.tab) {
+            guard !isRenaming else { return .ignored }
             state.toggleFocus()
             return .handled
         }
         .onKeyPress(.upArrow, phases: [.down, .repeat]) { press in
+            guard !isRenaming else { return .ignored }
             // Let the native list extend or contract its selection range.
             guard !press.modifiers.contains(.shift) else { return .ignored }
             state.activePane.selectPrevious()
             return .handled
         }
         .onKeyPress(.downArrow, phases: [.down, .repeat]) { press in
+            guard !isRenaming else { return .ignored }
             guard !press.modifiers.contains(.shift) else { return .ignored }
             state.activePane.selectNext()
             return .handled
         }
         .onKeyPress(.leftArrow) {
+            guard !isRenaming else { return .ignored }
             state.activePane.handleLeftArrow()
             return .handled
         }
         .onKeyPress(.rightArrow) {
+            guard !isRenaming else { return .ignored }
             state.activePane.handleRightArrow()
             return .handled
         }
         .onKeyPress(.return) {
+            guard !isRenaming else { return .ignored }
             state.activePane.navigateIn()
             return .handled
         }
         .onKeyPress(.escape) {
+            guard !isRenaming else { return .ignored }
             if case .editor = state.activePane.mode {
                 state.activePane.closeEditor()
                 reclaimKeyboardFocus()
@@ -105,7 +116,7 @@ struct DualPaneView: View {
 
     private func reclaimKeyboardFocus() {
         DispatchQueue.main.async {
-            guard !state.isCommandPalettePresented, case .browser = state.activePane.mode else { return }
+            guard !state.isCommandPalettePresented, !isRenaming, case .browser = state.activePane.mode else { return }
             isKeyboardFocused = true
         }
     }

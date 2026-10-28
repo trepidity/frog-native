@@ -16,7 +16,7 @@ extension AppDelegate {
     private func buildAppMenuItem() -> NSMenuItem {
         let appMenu = NSMenu()
         appMenu.addItem(
-            withTitle: "About frog-native",
+            withTitle: "About Frog",
             action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)),
             keyEquivalent: ""
         )
@@ -33,7 +33,7 @@ extension AppDelegate {
         appMenu.addItem(servicesItem)
         appMenu.addItem(NSMenuItem.separator())
         appMenu.addItem(
-            withTitle: "Hide frog-native",
+            withTitle: "Hide Frog",
             action: #selector(NSApplication.hide(_:)),
             keyEquivalent: "h"
         )
@@ -50,7 +50,7 @@ extension AppDelegate {
         )
         appMenu.addItem(NSMenuItem.separator())
         appMenu.addItem(
-            withTitle: "Quit frog-native",
+            withTitle: "Quit Frog",
             action: #selector(NSApplication.terminate(_:)),
             keyEquivalent: "q"
         )
@@ -191,7 +191,7 @@ extension AppDelegate {
     private func buildHelpMenuItem() -> NSMenuItem {
         let helpMenu = NSMenu(title: "Help")
         helpMenu.addItem(
-            withTitle: "Frog Native User Guide",
+            withTitle: "Frog User Guide",
             action: #selector(showHelpGuide),
             keyEquivalent: "?"
         )

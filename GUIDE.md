@@ -1,6 +1,6 @@
 # 📖 Aura User Guide: Master the Staircase
 
-Welcome to the definitive guide to **Frog Native**. This document covers every interaction, shortcut, and design philosophy needed to master the Aura experience.
+Welcome to the definitive guide to **Frog**. This document covers every interaction, shortcut, and design philosophy needed to master the Aura experience.
 
 ---
 
@@ -33,6 +33,8 @@ Double-click a directory breadcrumb above the tree to browse that directory.
 ### Actions
 - **`Cmd + N`**: Create a new "Untitled Folder".
 - **`Cmd + Backspace`**: Move selected item(s) to system Trash.
+- **Right-click → Rename…**: Rename a single file or folder in any browser layout. The dialog selects the current name for editing. Press **Return** to rename or **Escape** to cancel. Invalid names and filesystem errors appear in the dialog; an existing item is never replaced.
+- **Window placement**: The app remembers its monitor, position, and window size between launches. If the monitor is disconnected or its usable resolution changes, the window is fitted onto an available display.
 - **`Cmd + C`**: **Aura Hook** (Captures URL + rich image data).
 - **`Cmd + ,`**: Open Aura Preferences.
 
@@ -70,6 +72,6 @@ Use **Cmd + ,** to tune your experience:
 ---
 
 ## 🦉 Design Philosophy: The Staircase
-Frog Native is built on the idea that **Indentation is Physical.** By treating the filesystem as a vertical staircase, we reduce the cognitive load of "jumping" between windows and keep your focus on the relative depth of your project.
+Frog is built on the idea that **Indentation is Physical.** By treating the filesystem as a vertical staircase, we reduce the cognitive load of "jumping" between windows and keep your focus on the relative depth of your project.
 
 *Happy Climbing.*

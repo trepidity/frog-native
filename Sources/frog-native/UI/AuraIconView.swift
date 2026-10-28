@@ -11,7 +11,7 @@ struct AuraIconView: View {
                 .resizable()
                 .interpolation(.high)
                 .frame(width: size, height: size)
-                .accessibilityLabel("Frog Native")
+                .accessibilityLabel("Frog")
         }
     }
 }

@@ -65,7 +65,10 @@ struct FileBrowserPane: View {
                 .stroke(isFocused ? theme.ink.blue : theme.rule, lineWidth: isFocused ? 2 : 1)
                 .allowsHitTesting(false)
         )
-        .contextMenu { FileBrowserContextMenu(paneState: paneState) }
+        .contextMenu { FileBrowserContextMenu(paneState: paneState, targetIDs: paneState.selection) }
+        .sheet(item: $paneState.renameTarget) { item in
+            RenameItemSheet(paneState: paneState, item: item)
+        }
         .auraQuickLookPreview($paneState.previewURL)
     }
 
@@ -97,6 +100,9 @@ struct FileBrowserPane: View {
                     }
                 }
                 .listStyle(.inset)
+                .contextMenu(forSelectionType: URL.self) { targets in
+                    FileBrowserContextMenu(paneState: paneState, targetIDs: targets)
+                }
                 .scrollContentBackground(.hidden)
                 .alternatingRowBackgrounds(.disabled)
                 .background(theme.background)
@@ -162,6 +168,9 @@ struct FileBrowserPane: View {
                     .disabledCustomizationBehavior(.reorder)
                 }
                 .tableStyle(.inset)
+                .contextMenu(forSelectionType: URL.self) { targets in
+                    FileBrowserContextMenu(paneState: paneState, targetIDs: targets)
+                }
                 .scrollContentBackground(.hidden)
                 .alternatingRowBackgrounds(.disabled)
                 .background(theme.background)
@@ -172,6 +181,12 @@ struct FileBrowserPane: View {
 
 private struct FileBrowserContextMenu: View {
     @ObservedObject var paneState: PaneState
+    let targetIDs: Set<URL>
+
+    private var renameItem: FileItem? {
+        guard targetIDs.count == 1, let target = targetIDs.first else { return nil }
+        return paneState.visibleItems.first(where: { $0.id == target })?.item
+    }
 
     var body: some View {
         Button("Open") { paneState.navigateIn() }
@@ -185,8 +200,9 @@ private struct FileBrowserContextMenu: View {
         Divider()
         Button("New Folder") { paneState.createNewFolder() }
         Button("Rename...") {
-            print("Rename requested")
+            paneState.renameTarget = renameItem
         }
+        .disabled(renameItem == nil)
         Button("Move to Trash") { paneState.confirmMoveSelectionToTrash() }
         Divider()
         Button("Copy Path") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(paneState.currentDirectory.path, forType: .string) }
@@ -313,8 +329,8 @@ struct VerticalTreePane: View {
                         .listRowBackground(theme.background)
                     }
                 }
-                .contextMenu(forSelectionType: URL.self) { _ in
-                    FileBrowserContextMenu(paneState: paneState)
+                .contextMenu(forSelectionType: URL.self) { targets in
+                    FileBrowserContextMenu(paneState: paneState, targetIDs: targets)
                 } primaryAction: { selection in
                     guard let item = paneState.visibleItems.first(where: { selection.contains($0.id) }) else { return }
                     paneState.activate(item.item)

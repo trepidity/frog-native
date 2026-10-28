@@ -89,6 +89,7 @@ class PaneState: ObservableObject {
     @Published var forwardStack: [URL] = []
 
     @Published var previewURL: URL?
+    @Published var renameTarget: FileItem?
     @Published var soloRoot: URL?
     @Published var isPathLoading: Bool = false
 
@@ -137,14 +138,12 @@ class PaneState: ObservableObject {
 
         if let savedExpanded = UserDefaults.standard.stringArray(forKey: "pane.\(id).expandedItems") {
             self.expandedItems = Set(savedExpanded.map { URL(fileURLWithPath: $0) })
-            for url in self.expandedItems {
-                let item = FileItem(url: url)
-                self.itemChildren[url] = loadChildrenSync(for: item)
-            }
         }
 
         loadContents()
         wireSubscriptions()
+        // Restore children asynchronously so large saved folders cannot block launch.
+        refreshExpandedItems()
     }
 
     private func wireSubscriptions() {

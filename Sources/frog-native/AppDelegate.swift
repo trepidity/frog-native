@@ -8,6 +8,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var preferencesWindow: NSWindow?
     let state = BrowserState()
     private var keyMonitor: Any?
+    private let windowPlacement = WindowPlacementController()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         UniversalSearchIndex.shared.start()
@@ -21,11 +22,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             backing: .buffered,
             defer: false
         )
-        mainWindow.center()
-        mainWindow.title = "frog-native"
+        mainWindow.title = "Frog"
         mainWindow.titlebarAppearsTransparent = true
         mainWindow.titleVisibility = .hidden
         mainWindow.contentView = NSHostingView(rootView: contentView)
+        windowPlacement.restoreAndTrack(mainWindow)
         mainWindow.makeKeyAndOrderFront(nil)
         window = mainWindow
 
@@ -53,6 +54,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        if let window { windowPlacement.save(window) }
         UniversalSearchIndex.shared.stop()
         if let keyMonitor {
             NSEvent.removeMonitor(keyMonitor)

@@ -13,7 +13,7 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 // Header
                 HStack(alignment: .top) {
-                    Text("Frog Native")
+                    Text("Frog")
                         .font(.system(size: 13, weight: .bold))
                         .frame(height: 28)
                         .padding(.leading, 80) // Space for traffic lights
