@@ -34,6 +34,7 @@ Double-click a directory breadcrumb above the tree to browse that directory.
 - **`Cmd + N`**: Create a new "Untitled Folder".
 - **`Cmd + Backspace`**: Move selected item(s) to system Trash.
 - **Right-click → Rename…**: Rename a single file or folder in any browser layout. The dialog selects the current name for editing. Press **Return** to rename or **Escape** to cancel. Invalid names and filesystem errors appear in the dialog; an existing item is never replaced.
+- **Right-click → Copy Full Path**: Copy the absolute path, including the clicked file or folder name. With multiple items selected, **Copy Full Paths** copies one path per line. On empty space, it copies the current folder path.
 - **Window placement**: The app remembers its monitor, position, and window size between launches. If the monitor is disconnected or its usable resolution changes, the window is fitted onto an available display.
 - **`Cmd + C`**: **Aura Hook** (Captures URL + rich image data).
 - **`Cmd + ,`**: Open Aura Preferences.

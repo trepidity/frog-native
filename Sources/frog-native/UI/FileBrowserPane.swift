@@ -205,7 +205,11 @@ private struct FileBrowserContextMenu: View {
         .disabled(renameItem == nil)
         Button("Move to Trash") { paneState.confirmMoveSelectionToTrash() }
         Divider()
-        Button("Copy Path") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(paneState.currentDirectory.path, forType: .string) }
+        Button(targetIDs.count > 1 ? "Copy Full Paths" : "Copy Full Path") {
+            let paths = targetIDs.isEmpty ? [paneState.currentDirectory.path] : targetIDs.map(\.path).sorted()
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(paths.joined(separator: "\n"), forType: .string)
+        }
     }
 }
 
